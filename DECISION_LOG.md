@@ -10,6 +10,37 @@ correct choice; a summary of the highest-priority items to scrutinize is at the 
 Structure follows the exam: Problem 1, Problem 2, Problem 3 (in the same sub-question order as
 the notebook), then a consolidated "what to challenge first" list.
 
+**Update after independent verification.** A separate verification pass (an independent agent
+re-deriving numbers from scratch rather than trusting printed output) found one real, confirmed
+error and two minor issues, all now fixed in the notebook:
+
+1. **Q1.2's plain-English tree description was backwards.** The actual fitted tree splits on
+   `Age <= 42.5` at the *root* (not `EstimatedSalary` as originally written), and predicts
+   purchase unconditionally for everyone over 42.5, regardless of salary; only for people 42.5 or
+   younger does the salary threshold (>$90,500) determine the prediction. This was a genuine
+   factual error in the written answer, not the code — confirmed by direct inspection of
+   `best_tree.tree_`'s feature/threshold arrays. **Fixed** in the current notebook.
+2. **The claim that Ridge/Lasso penalties came from "a preliminary out-of-sample check" was not
+   backed by any visible cell** — the values were simply hardcoded. **Fixed**: Section 4 now
+   includes an actual grid search validated on a held-out 2007–2009 sub-block of the training
+   period (never touching the 2010+ test window), and every downstream cell uses the resulting
+   `RIDGE_ALPHA`/`LASSO_ALPHA` instead of the old fixed values. This changed `RIDGE_ALPHA` from
+   10.0 to **100.0** (`LASSO_ALPHA` stayed at 0.05) — which shifted the specific Ridge and
+   placebo-test numbers slightly (e.g. real-macro $R^2_{OOS}$ moved from −0.048 to −0.043); the
+   qualitative story (real macro loses to the 24- and 36-month placebo shifts) is unchanged.
+   OLS and Lasso numbers, and everything in Problem 1, 2, and the portfolio section, were
+   unaffected by this change.
+3. **The portfolio turnover convention was ambiguous** — `Σ|Δw|` counts both legs of a rebalance
+   (an "unhalved" convention), which is 2x a "one-way" convention some texts use. **Fixed**:
+   Section 7 and the Methodology write-up now state this explicitly, including the quantified
+   effect of the alternative convention (≈0.05–0.1 higher net Sharpe for the two highest-turnover
+   strategies under the halved convention — not enough to change the ranking).
+
+The rest of this document was written before that verification pass and describes the original
+design reasoning; where a number below hasn't been updated to match the post-fix values, treat
+the *reasoning* as current and re-check the *exact figure* against the notebook's own latest
+output.
+
 ---
 
 ## Problem 1: Trees and Ensembles
@@ -42,9 +73,12 @@ the notebook), then a consolidated "what to challenge first" list.
 - I additionally printed the chosen tree's `feature_importances_` (MDI) as extra context before
   1.4 asks for it formally. This is scope creep beyond what 1.2 asks — harmless, but flag it if
   your own solution doesn't do this and you're comparing cell-by-cell.
-- The plain-English description ("rich people buy it regardless of age; among people who aren't
-  rich, only the older ones do") is a direct read of the fitted 3-leaf tree's actual splits
-  (EstimatedSalary ≤ 90,500, then Age ≤ 42.5) — this is descriptive, not a modeling choice, but
+- **Corrected after verification** (see the update note at the top of this document): the
+  original written answer had the split order backwards (claimed salary was the root split and
+  age the secondary one). The actual fitted tree splits `Age <= 42.5` at the root; anyone over
+  42.5 is predicted to purchase unconditionally, and only for people 42.5-or-younger does the
+  `EstimatedSalary <= 90,500` threshold decide the prediction. The notebook's answer text is now
+  corrected to match. This is descriptive, not a modeling choice, but
   it's worth checking against your own fitted tree, since a different `random_state` or a
   different tie-broken leaf count would change the exact thresholds.
 
@@ -292,16 +326,23 @@ the notebook), then a consolidated "what to challenge first" list.
   this was not verified.
 
 ### Model hyperparameters — the single biggest simplification in Problem 3
-- **Ridge `alpha=10.0`, Lasso `alpha=0.05`, RF (`n_estimators=200, max_depth=4,
-  min_samples_leaf=20`), GBRT (`n_estimators=100, max_depth=2, learning_rate=0.05`) are all fixed
-  values, chosen once from a quick, informal check on the training block alone, and then reused
-  unchanged across every refit date in every scheme.** This is explicitly *not* the rigorous
-  approach Lecture 5 itself demonstrates (time-ordered cross-validation to choose the penalty
-  *at each refit*, e.g. via `LassoCV` inside an expanding-window loop) — I judged that adding a
-  full nested-CV hyperparameter search inside an already-large notebook was outside a reasonable
-  scope/time budget for this exercise, and chose fixed, reasonable-looking values instead. **This
-  is a real limitation**: the reported Ridge/Lasso/RF/GBRT numbers reflect one point in
-  hyperparameter space each, not the best each model family could achieve with proper per-refit
+- **Update:** Ridge and Lasso penalties are no longer hardcoded guesses — as of the post-
+  verification fix, they're chosen by a grid search validated on a held-out 2007–2009 sub-block
+  of the training period (train on 2000–2006, validate on 2007–2009, never touching 2010+),
+  selecting `RIDGE_ALPHA=100.0` and `LASSO_ALPHA=0.05` from small grids ({0.1,1,10,100} and
+  {0.005,0.01,0.05,0.1} respectively). This is a real, if modest, improvement over the original
+  fully-hardcoded values (which happened to use `alpha=10.0` for Ridge, since revised) — but it
+  is still **one fixed pair of values reused across every refit date in every scheme**, not a
+  per-refit re-tuning. **RF (`n_estimators=200, max_depth=4, min_samples_leaf=20`)** and **GBRT
+  (`n_estimators=100, max_depth=2, learning_rate=0.05`)** remain informal, un-validated judgment
+  calls — no grid search was run for either. This is still *not* the fully rigorous approach
+  Lecture 5 itself demonstrates (time-ordered cross-validation to choose the penalty *at each
+  refit*, e.g. via `LassoCV` inside an expanding-window loop) — I judged that adding a full
+  nested-CV search *inside every one of the ~15 annual refits, for every model*, was outside a
+  reasonable scope/time budget for this exercise, and chose one validated (linear) or reasoned
+  (tree) hyperparameter set applied throughout instead. **This is still a real limitation**: the
+  reported numbers reflect one point in hyperparameter space each, not the best each model family
+  could achieve with proper per-refit
   tuning. If your own solution tunes hyperparameters via nested time-ordered CV, expect your
   numbers to differ from this notebook's, and don't assume this notebook's fixed choices are
   optimal — they are reasonable, not optimized.
@@ -395,3 +436,13 @@ matter or most likely to differ from your own solution:
 7. **The OOS split date (2010), rolling window length (120mo), and refit cadence (12mo)** in
    Problem 3 are all defensible-but-arbitrary design choices, not derived from the data or dictated
    by the exam, and were not stress-tested against nearby alternatives.
+8. **Ridge/Lasso penalties are now validated (2007-09 held-out sub-block) but RF/GBRT depth and
+   leaf-size settings are still un-validated judgment calls** — after the post-verification fix,
+   the linear-model gap in item 4 is partially closed but the tree-ensemble gap is not.
+9. **Portfolio turnover is defined as the unhalved `Σ|Δw|`** (both legs of a rebalance), 2x a
+   "one-way" convention some texts use — stated explicitly as of the post-verification fix, with
+   the quantified effect of the alternative convention noted in Section 7.
+
+**Already found and fixed** (by an independent verification pass, not by you — but check the
+fix matches your own reading if you worked through 1.2 yourself): Q1.2's original written answer
+had the tree's split order backwards (claimed salary was the root split; it's actually age).
