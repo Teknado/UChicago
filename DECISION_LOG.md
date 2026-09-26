@@ -1,448 +1,154 @@
 # Decision Log — `Final_project_claude.ipynb`
 
-**Purpose of this document.** Every choice, assumption, and judgment call made while building the
-reference solution, with the reasoning behind it, the alternatives considered, and — where
-relevant — what was *not* done and why. This is written so you can independently challenge any
-individual decision without having to reverse-engineer it from the code. Where I made a real
-simplification or a debatable call, I say so explicitly rather than presenting it as the only
-correct choice; a summary of the highest-priority items to scrutinize is at the very end.
+This log records every choice, assumption and judgment call in the reference solution: what was chosen, why, what was considered instead, and what was *not* done. It was rewritten after a full re-evaluation of the notebook against the exam, the data, the eight lectures and the AI Coding Guide. `REVIEW.md` lists every error that re-evaluation found and how each was fixed. This file describes the design as it now stands.
 
-Structure follows the exam: Problem 1, Problem 2, Problem 3 (in the same sub-question order as
-the notebook), then a consolidated "what to challenge first" list.
-
-**Update after independent verification.** A separate verification pass (an independent agent
-re-deriving numbers from scratch rather than trusting printed output) found one real, confirmed
-error and two minor issues, all now fixed in the notebook:
-
-1. **Q1.2's plain-English tree description was backwards.** The actual fitted tree splits on
-   `Age <= 42.5` at the *root* (not `EstimatedSalary` as originally written), and predicts
-   purchase unconditionally for everyone over 42.5, regardless of salary; only for people 42.5 or
-   younger does the salary threshold (>$90,500) determine the prediction. This was a genuine
-   factual error in the written answer, not the code — confirmed by direct inspection of
-   `best_tree.tree_`'s feature/threshold arrays. **Fixed** in the current notebook.
-2. **The claim that Ridge/Lasso penalties came from "a preliminary out-of-sample check" was not
-   backed by any visible cell** — the values were simply hardcoded. **Fixed**: Section 4 now
-   includes an actual grid search validated on a held-out 2007–2009 sub-block of the training
-   period (never touching the 2010+ test window), and every downstream cell uses the resulting
-   `RIDGE_ALPHA`/`LASSO_ALPHA` instead of the old fixed values. This changed `RIDGE_ALPHA` from
-   10.0 to **100.0** (`LASSO_ALPHA` stayed at 0.05) — which shifted the specific Ridge and
-   placebo-test numbers slightly (e.g. real-macro $R^2_{OOS}$ moved from −0.048 to −0.043); the
-   qualitative story (real macro loses to the 24- and 36-month placebo shifts) is unchanged.
-   OLS and Lasso numbers, and everything in Problem 1, 2, and the portfolio section, were
-   unaffected by this change.
-3. **The portfolio turnover convention was ambiguous** — `Σ|Δw|` counts both legs of a rebalance
-   (an "unhalved" convention), which is 2x a "one-way" convention some texts use. **Fixed**:
-   Section 7 and the Methodology write-up now state this explicitly, including the quantified
-   effect of the alternative convention (≈0.05–0.1 higher net Sharpe for the two highest-turnover
-   strategies under the halved convention — not enough to change the ranking).
-
-The rest of this document was written before that verification pass and describes the original
-design reasoning; where a number below hasn't been updated to match the post-fix values, treat
-the *reasoning* as current and re-check the *exact figure* against the notebook's own latest
-output.
+Conventions: **Given** = dictated by the exam; **Choice** = our decision; **Not done** = a real gap you may want to close.
 
 ---
 
 ## Problem 1: Trees and Ensembles
 
-### 1.1 — baseline, unpruned tree, leaf-size sweep
-- **CV setup exactly as specified**: `StratifiedKFold(5, shuffle=True, random_state=7034)`, and
-  `random_state=7034` passed to every tree/forest/boosting model. This is not a choice — the exam
-  mandates it verbatim so every model's number is comparable to every other. `shuffle=True` here
-  is **not** the leakage trap discussed in 1.5 and Lecture 5, because this dataset's rows are
-  cross-sectional (people), not time-ordered — shuffling is the *correct* thing to do for i.i.d.
-  cross-sectional CV, and the exam is deliberately testing whether you know the difference (1.5
-  asks exactly this).
-- **Baseline** = `1 - ya.mean()` (accuracy of predicting the majority class, "nobody purchases").
-  This is the textbook zero-information baseline; no alternative considered.
-- **Leaf grid** `{2,3,4,6,8,12}` — given verbatim by the exam, not a choice.
-- **Tie-break rule** ("if two sizes tie, take the smaller"): implemented as
-  `max(leaf_acc, key=lambda k: (leaf_acc[k], -k))`. This works because Python's `max` breaks ties
-  on the *first* comparison key that differs; since `-k` is strictly decreasing in `k`, among tied
-  accuracies the entry with the larger `-k` (i.e., smaller `k`) wins. I chose this one-liner over an
-  explicit loop for compactness; a more verbose but equally correct alternative would sort by
-  `(-accuracy, size)` and take the first. Both are correct; I picked the shorter one.
-- A plot of accuracy vs. `max_leaf_nodes` was added beyond what the question strictly requires
-  (it only asks you to "report" the accuracies) — a judgment call that a plot makes the
-  U-shape easier to see, not required for credit.
+### 1.1 — baseline, unpruned tree, leaf sweep
+- **Given:** `StratifiedKFold(5, shuffle=True, random_state=7034)` and `random_state=7034` on every model; leaf grid {2, 3, 4, 6, 8, 12}; ties go to the smaller size. Shuffling is correct here: rows are unrelated people (this is the contrast 1.5 asks about).
+- **Baseline** = 1 − mean(Purchased) = 64.25%.
+- **Tie-break** `max(leaf_acc, key=lambda k: (leaf_acc[k], -k))`, which is correct for "take the smaller". 3 and 4 leaves tie exactly. We checked why: their out-of-fold predictions are identical for all 400 people, because the fourth leaf only splits a group that is already classified.
+- **Extra (not required):** accuracy-vs-size plot; `export_text` of the 4-leaf tree.
 
-### 1.2 — plot and plain-English description
-- `plot_tree(..., feature_names=Xa.columns, class_names=['No','Yes'], filled=True)` — the exam
-  specifies `feature_names`; `class_names` and `filled=True` are my additions purely for
-  readability, not required.
-- I additionally printed the chosen tree's `feature_importances_` (MDI) as extra context before
-  1.4 asks for it formally. This is scope creep beyond what 1.2 asks — harmless, but flag it if
-  your own solution doesn't do this and you're comparing cell-by-cell.
-- **Corrected after verification** (see the update note at the top of this document): the
-  original written answer had the split order backwards (claimed salary was the root split and
-  age the secondary one). The actual fitted tree splits `Age <= 42.5` at the root; anyone over
-  42.5 is predicted to purchase unconditionally, and only for people 42.5-or-younger does the
-  `EstimatedSalary <= 90,500` threshold decide the prediction. The notebook's answer text is now
-  corrected to match. This is descriptive, not a modeling choice, but
-  it's worth checking against your own fitted tree, since a different `random_state` or a
-  different tie-broken leaf count would change the exact thresholds.
+### 1.2 — plot and description
+- `plot_tree(..., feature_names=Xa.columns)` as required; `class_names` and `filled` for readability.
+- **Description** read off the fitted tree: root `Age <= 42.5` (everyone older is predicted to buy); for 42-or-younger, `EstimatedSalary > 90,500` predicts buy. Gender is unused. Written as two sentences (the rule, then "Gender is never used"), within the exam's one or two.
 
-### 1.3 — RF(300) and GBRT(100) vs. the pruned tree
-- **Deliberate non-tuning.** The exam specifies only `n_estimators` (300 for RF, 100 for GBRT) and
-  `random_state=7034`; I left every other hyperparameter (`max_depth`, `learning_rate`,
-  `min_samples_leaf`, etc.) at scikit-learn's defaults. This was a conscious choice, not an
-  oversight: the question asks you to compare the *given* configuration against the tree and
-  "report what you find whichever way it comes out" — tuning the ensembles until they win would
-  defeat the point of the question, which is explicitly testing whether you'll report an honest
-  negative result (ensembles losing to a single well-pruned tree) rather than quietly finding
-  hyperparameters that flatter the ensemble. If you tuned RF/GBRT further in your own solution,
-  your numbers will legitimately differ — that's a design choice worth discussing, not an error.
-- The explanation offered (small n, low dimension, genuinely simple boundary → ensembles have
-  little variance to kill by averaging) is an interpretation of the *result*, not a claim that
-  could be independently "wrong" in the way a formula could be — but it's worth checking whether
-  your own explanation for the same (or a different) outcome agrees.
+### 1.3 — RF(300), GBRT(100)
+- **Deliberately untuned.** Only the exam's settings; everything else is sklearn default. The question asks you to report the result "whichever way it comes out".
+- **Added:** per-fold accuracies and paired fold t-statistics (1.24 and 0.98), so that "the ensembles do not beat the tree" is not overstated as "the tree is better".
+- **Explanation** consistent with Lecture 8: forests average deep, unpruned trees (p.44); out-of-the-box boosting loses even to the forest (p.61).
 
-### 1.4 — MDI vs. permutation importance
-- **70/30 split**, `random_state=7034`, `stratify=ya` — given verbatim by the exam.
-- **`n_repeats=30`** for `permutation_importance` — **my choice, not specified by the exam.**
-  Lecture 8 itself warns "repeat the shuffle several times and average, since a single
-  permutation is itself a random draw"; 30 is an arbitrary but reasonable number balancing
-  stability against the (here, trivial) compute cost. A different `n_repeats` (10, 50, 100) would
-  very likely shift the exact permutation-importance numbers slightly but is very unlikely to flip
-  the qualitative finding (Age > EstimatedSalary out-of-sample, opposite of MDI's in-sample
-  ranking), since the effect size in the printed table is large relative to what such a small
-  change in repeat count would move.
-- I passed `random_state=7034` to `permutation_importance` too, for full reproducibility — not
-  explicitly requested, but consistent with the exam's own stated intent ("so the numbers are
-  comparable").
+### 1.4 — MDI vs permutation importance
+- **Given:** 70/30 split, `random_state=7034`, `stratify=ya`, 300-tree forest.
+- **Choice:** `n_repeats=30`, `random_state=7034` for `permutation_importance`. Lecture 8 p.57 says to repeat and average. The ranking (Age > Salary) holds in every repeat.
+- **Mechanism** cited to Lecture 8 p.58 ("MDI rewards a column for merely offering many places to split"), with the actual cardinalities printed (Salary 117, Age 43).
 
-### 1.5 — shuffle=True on time-ordered data (open-ended)
-- Pure written answer, no code, since the exam says "(if any)" for the code cell. The claimed
-  direction of bias (shuffled CV **overstates** accuracy, i.e., is optimistically biased) is
-  taken directly from Lecture 5's own quantified example (random 5-fold cost 0.036 of
-  out-of-sample R² relative to an expanding window on a real macro panel) — this is a documented
-  course result, not something I derived from scratch, so if you disagree with the direction it's
-  worth re-reading that lecture slide specifically before concluding the notebook is wrong.
+### 1.5 — shuffled CV on time-ordered data
+- **Written answer only.**
+- **Mechanism:** persistent predictors and regimes, so a test month's neighbours share its information. Returns themselves are at most weakly autocorrelated (median lag-1 autocorrelation in the course panel ≈ 0.02).
+- **Remedy:** expanding or rolling time-ordered validation with a gap.
+- **Direction:** optimistic.
+- **Lecture 5 p.56 example:** it is cited for what it measures, namely random folds under-regularizing the lasso and costing 0.036 of test $R^2$.
 
 ---
 
 ## Problem 2: Training on Your Own Output
 
 ### Global setup
-- **`SEED = 0`, left at the template default rather than your actual student ID.** This is the
-  single most important caveat in the entire notebook: I do not know your student ID, so every
-  specific number reported in Problem 2 (0.00443, the 41.6th percentile, the 56.1% share, etc.)
-  is valid *only* for `SEED=0`. The exam explicitly says results will differ by seed and that
-  this is the point — so if you compare your own (real-seed) numbers against this notebook's
-  numbers and they don't match, **that is expected and correct**, not a bug. What should match
-  qualitatively across any seed: the direction and rough order of magnitude of the VaR collapse,
-  the fact that the median collapses while the mean is dominated by a few extreme desks, and the
-  `-1/n` drift formula (which doesn't depend on the seed at all, only on `n`).
-- **`np.random.default_rng(SEED)`**, the modern NumPy `Generator` API, rather than the legacy
-  `np.random.seed()` / `np.random.randn()` interface — chosen for reproducibility guarantees and
-  because it's the interface scikit-learn/scipy documentation now recommends; purely a style
-  choice with no effect on the statistical content.
-- **A fresh `Generator` instance per sub-experiment** (`rng`, `rng_m`, `rng_v`, `rng_n`, `rng_a`,
-  `rng_b` — one each for the one-desk run, the 1000-desk run, the unbiasedness check, the drift-
-  formula check, experiment 2.4(a), and experiment 2.4(b)), **all seeded with the same `SEED`**
-  rather than one global generator threaded through the whole problem. This means, for instance,
-  the "one desk" in 2.2 is a *separate* simulation from any single desk inside the 1000-desk
-  cohort — it is not literally desk #1 of that cohort, even though both start from the same seed
-  and the same statistical setup. **Alternative not chosen:** thread one `rng` through the whole
-  problem, so the one-desk run and the 1000-desk run share a continuous random stream (making the
-  "one desk" literally traceable as a specific member of later cohorts). I judged independent,
-  per-experiment reproducibility more valuable than that traceability, but it's a legitimate
-  design choice to make differently.
+- **`SEED = 0` is a placeholder.** Set it to the last four digits of your student ID. Every specific Problem 2 number is for seed 0. What does *not* depend on the seed:
+  - the −1/n drift and its exact value $\log 2 + \psi(\tfrac{n-1}{2}) - \log(n-1)$;
+  - the lognormal approximation at night 2,500;
+  - the qualitative collapse.
+- **Choice:** `np.random.default_rng`, with a fresh generator per experiment, all seeded with `SEED`. The "one desk" of 2.2 is a separate simulation, not desk #1 of the cohort. Threading one generator through the problem would be equally valid.
 
 ### 2.2 — one desk, then a thousand
-- **Night-1 variance forced to exactly 1** via `library = library / library.std(ddof=1)` — this is
-  not my choice, it's a hard requirement from the exam ("every desk starts night 1 from a library
-  whose sample variance is exactly 1"). Rescaling (rather than resampling until sample variance is
-  merely *close* to 1) is the only way to satisfy "exactly."
-- **Vectorization**: at each of the 2,500 nights, I draw a `(1000, 500)` matrix of standard normals
-  and scale each desk's row by that desk's current `sqrt(σ̂²)`, rather than looping over 1,000
-  individual desks in Python. This is purely a performance choice (≈20 seconds vectorized vs. what
-  would likely be minutes in a naive Python loop) with no effect on the statistics — the
-  per-desk math is identical either way.
-- The **percentile-rank comparison** ("my one desk sits at the 41.6th percentile of the 1,000-desk
-  distribution") is descriptive of whatever `SEED=0` happens to produce; with your real seed, your
-  one desk could land anywhere in the distribution, including well above the median. Don't expect
-  this specific percentile to reproduce.
+- **Given:** night-1 library rescaled to sample variance exactly 1; fits with `var(ddof=1)`; draws from $N(0, \hat\sigma^2)$; full replacement. Night 2,500 = the 2,500th fit after 2,499 random steps.
+- **Vectorized** 1,000 × 500 draws per night. This is a performance choice only.
+- **Added:** the story's implied $\hat\sigma^2 = (0.24/2.8)^2 = 0.0073$ and its percentile in the cohort (48.8th, i.e. the median desk), and the one desk's percentile (41.6th). All numbers in the answer are printed by a cell.
 
-### 2.3 — unbiasedness and the log-drift formula
-- **Unbiasedness check** used two starting levels (`σ̂²=1` and `σ̂²=4`) and 5,000 independent
-  one-step draws at each, purely to make the check convincing at more than one point (showing the
-  property isn't an artifact of starting exactly at 1). Using only one starting level would have
-  been sufficient for a strict reading of the question but felt like a weaker demonstration.
-- **`avg_log_change(n, n_desks=500, n_nights=300)`** — `n_desks=500` and `n_nights=300` are my
-  choice within the exam's own suggested range ("a few hundred desks and a few hundred nights are
-  enough"); I did not search for a minimal sufficient number, just picked round numbers inside the
-  suggested band. The function resets every desk to `σ̂²=1` and tracks the *average* log-change at
-  each night, then averages across nights — this works because the one-step log-drift is
-  scale-invariant (it depends on `n`, not on the current level of `σ̂²`), so starting everything at
-  1 rather than at a mix of levels doesn't bias the estimate.
-- **The `-1/n` formula** is not just an empirical pattern-match to the simulation — it follows from
-  the exact distributional fact that `(n-1)·S²/σ² ~ χ²_{n-1}` for i.i.d. Gaussian draws, so
-  `E[log(S²/σ²)] = log(2) + ψ((n-1)/2) − log(n-1)`, which is ≈ `−1/(n−1) ≈ −1/n` for large `n`
-  by the standard digamma asymptotic `ψ(x) ≈ log(x) − 1/(2x)`. This is real, derivable math, not
-  just curve-fitting to the numbers the simulation happened to produce.
-- The **histogram at night 2,500 reuses the same 1,000-desk cohort from 2.2** rather than
-  re-simulating a fresh cohort — a deliberate choice so that the "share held by the top 10"
-  statistic and the earlier mean/median/percentile numbers in 2.2 are all describing the *same*
-  underlying draws, keeping the write-up's cross-references internally consistent.
+### 2.3 — unbiasedness, drift, reconciliation
+- **Unbiasedness check:** two starting levels (1 and 4), 5,000 one-step draws each, with Monte Carlo standard errors.
+- **Drift:** `avg_log_change(n, n_desks=500, n_nights=300)`, inside the exam's "a few hundred". Standard errors are reported, plus the exact digamma value. The simulated drift is within 1.5 s.e. of it for all three n.
+- **Reconciliation.** $\log\hat\sigma^2$ is an exact random walk with i.i.d. steps $\log(\chi^2_{n-1}/(n-1))$. Its night-2,500 distribution is ≈ $N(-5.01, 3.17^2)$: median $e^{\mu}$ ≈ 0.0067 and mean $e^{\mu+s^2/2} = 1$. Half the mean comes from desks above ≈ 152, which have probability 0.08% each. A lognormal cohort simulation (2,000 cohorts of 1,000) shows the sample mean has median 0.67 and is below 1 in 76% of cohorts.
+- **Histogram:** it reuses the 2.2 cohort, so the 2.2 thousand-desk numbers and the 2.3 histogram and reconciliation describe the same draws. The unbiasedness check, the drift table, the cohort simulation and 2.4 each use their own generator.
 
 ### 2.4(a) — permanent real anchor
-- **A genuine ambiguity in the exam's wording, resolved by assumption.** The prompt says: "add
-  each night's 500 scenarios to them instead of replacing them, so the library holds 1,000
-  returns, half real and half synthetic" — this describes the *steady state* (1,000 total, 500
-  real + 500 synthetic) but doesn't fully specify what the synthetic half *is* before night 1 has
-  happened. **My resolution:** I initialized the synthetic half as a copy of the real half (so
-  night 1's fit sees library = [500 real, 500 real] = trivially `σ̂²=1`), then let the synthetic
-  half evolve from there. An equally defensible alternative reading is that night 1's fit uses
-  only the 500 real returns (library size 500, not 1,000, for the very first fit), reaching the
-  full 1,000-observation steady state only from night 2 onward. I do not believe this changes the
-  qualitative conclusion (that a permanent real anchor prevents collapse/explosion) since both
-  readings converge to the same steady-state behavior quickly, but the specific night-2500 numbers
-  could differ slightly between the two readings, and this is worth checking against how you
-  resolved the same ambiguity in your own solution.
+- **Reading of the exam:** night 1's library is the 500 real days (sample variance exactly 1, as the Rules require). From night 2 it is the 500 real days plus the latest 500 scenarios (1,000 returns).
+- **Earlier version:** it duplicated the real half on night 1 (σ̂² = 0.999). The night-2,500 numbers are identical to machine precision, because the night-1 difference decays by about ½ per night.
+- **Interpretation:** the anchor makes the update an AR(1) with coefficient about ½ and a floor of 499/999, so noise is bounded. The residual 0.944–1.059 band is essentially all synthetic sampling noise, since the real data alone give exactly 1.
 
-### 2.4(b) — real dj30 data
-- `dj.groupby('date').MrkRet.first()` — exactly the reduction the exam specifies, since `MrkRet`
-  is repeated identically across all 30 stocks' rows for a given date.
-- `kurtosis(..., fisher=True)` — explicit, even though `fisher=True` is scipy's own default —
-  added for clarity/defensiveness against a reader assuming Pearson's convention (kurtosis=3 for
-  normal) rather than excess kurtosis (0 for normal), since the exam's language ("excess
-  kurtosis") specifically means the Fisher convention.
-- A fresh `rng_b` (seeded from the same `SEED`) draws the 500 night-1 synthetic scenarios — not
-  reused from any earlier block, for the same "independent reproducibility per experiment" reason
-  given above.
+### 2.4(b) — DJ30
+- `dj.groupby('date').MrkRet.first()` (MrkRet is identical across stocks on a date); 1,511 days, 2016–2021.
+- `kurtosis(fisher=True)` is excess kurtosis. We also report kurtosis excluding 15 Feb–30 Apr 2020 (5.28) to show where the fat tail comes from.
+- The night-1 library is all 1,511 real days, which reproduces the story's 2.8% VaR (2.78%).
+- A fresh `rng_b` draws the 500 night-1 scenarios.
 
 ---
 
-## Problem 3: Research Project — this is where most of the real judgment calls live
+## Problem 3: Research Project
 
-### Target variable
-- **Vol-scaled excess return** $y_{i,t} = r_{i,t}/\hat\sigma_{i,t-1}$, exactly the target the exam
-  *recommends* (not mandates) — I adopted the recommendation rather than deviating from it.
-  **Alternatives explicitly not used:** raw `excess_return` (rejected — a pooled loss function
-  over raw returns would be dominated by class-A's ~30%-vol assets, effectively ignoring class D's
-  ~6%-vol assets, exactly the scale problem Section 1 documents); log returns (rejected as
-  unnecessary complexity for monthly-frequency data of this kind); a cross-sectional rank target
-  (rejected — complicates inverting a forecast back into a return-scale number for portfolio
-  construction).
-- **Trailing volatility**: 12-month rolling standard deviation of `excess_return`, `shift(1)`
-  applied before the rolling window (so the vol estimate at date $t$ uses only returns through
-  $t-1$), `min_periods=12` (strict — no partial windows). This costs the first 12 observations per
-  asset (600 rows total, 50 assets × 12 months) as `NaN`/dropped. **Alternative not used:** a
-  shorter `min_periods` (e.g. 6) would retain more early-2000s data at the cost of noisier early
-  vol estimates; I chose strictness over sample size for this specific piece.
+### Target
+- **Choice (the exam's recommendation):** $y_{i,t}=r_{i,t}/\hat\sigma_{i,t-1}$, with $\hat\sigma$ the 12-month standard deviation of returns through $t-1$ (`shift(1).rolling(12, min_periods=12)`).
+- **Rejected:** raw returns (class A would dominate the loss); ranks (hard to turn back into positions).
+- **Cost:** the first 12 months of each asset.
 
-### Cross-sectional standardization: all-assets vs. within-class
-- I standardized characteristics **across all 50 assets each month** (not separately within each
-  class), even though the exam explicitly offers both as valid ("z-score or rank," "across all
-  assets or within class"). **Rationale:** the primary specification in this notebook is the
-  *pooled* model (Section 6 explicitly tests pooled vs. per-class and finds pooled wins), so
-  standardizing on the same cross-section the pooled model actually sees is the internally
-  consistent choice. **Not done:** a within-class standardization was not implemented or tested as
-  a robustness check — this is a real gap if you want to know whether within-class standardization
-  would have changed the pooled-vs-per-class conclusion.
+### Characteristics
+- **Identification (data, not guesswork):**
 
-### Country-macro feature set: curated only (14 columns), extended file NOT used as features
-- **A significant, deliberate scope-narrowing decision.** The final model feature set uses only
-  the 7 curated country columns (`x10`–`x16`, lagged) plus their 7 differentials against
-  `country_7` — 14 country-macro columns total. **The 150-column extended file was cleaned for
-  missing values (forward-filled, duplicates against the curated file dropped) but the cleaned
-  result is never fed into any model.** This is explicit in the write-up's Interpretation section
-  ("we considered using the full 150-column extended file... given it's explicitly flagged as
-  exploratory material of uneven quality... adding 150 more largely-uncurated columns would only
-  have multiplied the overfitting risk"), but it means: **if your own solution incorporated any of
-  the extended file's variables as features, your model results are not directly comparable to
-  this notebook's**, and the missing-value cleanup work you'll see for the extended file's 7 gappy
-  columns in the notebook is, in a real sense, inert — performed for completeness/transparency but
-  not actually load-bearing for any downstream result.
+  | char | what it is | evidence |
+  |---|---|---|
+  | `x2` | trailing 12m compounded return through t−1 (momentum) | corr 0.993 |
+  | `x3` | ≈ −(trailing 60m return), long-term reversal / value | corr −0.94 |
+  | `x5` | trailing 36m volatility | corr 1.000 |
+  | `x1`, `x4` | class-specific fundamentals (carry / valuation type) | cross-sectional scales differ 100–1000x across classes |
 
-### The `country_7` base/differential convention — a real structural artifact, not flagged in-notebook
-- **Verified fact, not previously stated in the notebook's own write-up:** because every
-  differential feature is computed as `country_value - country_7_value`, and this is computed
-  for *every* country including `country_7` itself, all 7 differential columns are **identically
-  zero, for every month, for every asset physically mapped to `country_7`** — that's all 26
-  class-A assets plus the one class-C and one class-D asset that also happen to sit in
-  `country_7` (28 of 50 assets, 56% of the panel). For those 28 assets, the "differential" half of
-  the country-macro feature set carries no information beyond a constant zero; only the level
-  columns (`x10`–`x16`) vary for them. This is a direct, unavoidable consequence of using
-  `country_7` as *both* the class-A convention and the differencing base — not a coding bug, but a
-  design consequence worth weighing when you look at how much the differential features
-  contribute to any model's fit.
+- **Lags (given):** `x2`, `x5` as stored; `x1`, `x3`, `x4` shifted one month within asset.
+- **Backfill (given warning):** leading runs of identical values in `x2`/`x3`/`x5` are copies of a later value. They are blanked, keeping the first genuine observation (`x3`: five assets, 30–31 months; `x2`: two; `x5`: one). Not done: filling them with a same-date cross-sectional median instead of dropping.
+- **Standardization. Choice: within month and within asset class** (z-score), because an all-asset z-score of `x1` and `x4` mostly encodes class membership. The all-asset version is run as a robustness check. It is clearly worse for characteristics-only models and mixed with macro. Not done: rank transforms; class dummies.
 
-### Global macro standardization: 60-month trailing window, `min_periods=24`
-- Both numbers are my choice, not specified by the exam (which only says "a rolling z-score, for
-  instance"). 60 months (5 years) was chosen as long enough to give slow-moving macro series a
-  stable mean/std estimate, short enough to adapt across a 25-year sample that includes very
-  different rate/inflation regimes. `min_periods=24` (2 years) trades off starting the
-  standardization earlier against using a noisier early estimate. **Alternative not tested:** an
-  *expanding* (not fixed-window rolling) standardization — using all data from the start up to
-  $t-1$ rather than only the trailing 60 months — is equally defensible and would give
-  different (likely smoother, since it uses more data) results, especially in the early part of
-  the sample.
+### Macro
+- **Lag.** One month for all series (the exam's minimum), **except `x10`, lagged 13 months.** `x10` changes only in January and matches the same-year mean of `x86` (corr 0.998). With a one-month lag it would feed forecasts the average of months not yet observed. Not done: longer publication lags for other series (we have no release calendar).
+- **`x11` (stops for `country_9/11/12`, trailing gaps only):** rebuilt by **chain-linking**: the last observed value plus the subsequent change in the complete series `x86 − x12` (a real rate: a nominal rate minus inflation).
+  - Pooled correlation of `x86 − x12` with `x11`: 0.988.
+  - In a 36-month pseudo-out-of-sample test, chain-link MAE is 0.11 / 0.21 / 0.03 (`country_9/11/12`); a level rebuild with a mean offset gives 0.14 / 0.19 / 0.40, and forward-fill 1.22 / 1.52 / 0.64.
+  - Rejected: forward-fill, which would freeze values through the 2021–23 inflation surge.
+- **Duplicates:** ten extended columns duplicate six curated and all four global series exactly, and one extended pair is an exact sign flip. All eleven are dropped. The scan uses `allclose(atol=rtol=1e-6)` on ≥100 overlapping rows. Not done: a search for exact transforms (the extended file holds some pre-computed changes, e.g. of `x12` and `x6`), which is inert because the file is unused.
+- **Extended file:** apart from `x86` (for the `x11` rebuild), not used as features. Its seven gappy columns (all trailing gaps) are forward-filled for completeness only. This is a scope decision, and a real gap if you have hypotheses for its series.
+- **Global macro:** trailing 60-month z-score (`min_periods=24`) of the lagged series, i.e. information through $t-1$ only. Not done: an expanding z-score, which would start the macro sample earlier.
+- **Country mapping:** own country for B/C/D; `country_7` for class A (the files' convention); plus differentials vs `country_7`. The differentials are identically zero for the 28 assets in `country_7` (26 A + 1 C + 1 D). Not done: cross-country averages or a widened panel for class A.
 
-### Missing-value treatment, in more depth than the notebook states
-- **`x11`**: forward-filled within country, plus an `x11_stale` flag — I checked whether it could
-  instead be *rebuilt* from another complete series (best proxy correlation in the extended file
-  ≈0.61, judged too weak to substitute) before choosing to forward-fill. **What I did not do:** a
-  *country-specific* treatment — e.g., dropping `x11` (or zeroing its influence) specifically for
-  `country_12` after October 2020, where the staleness coincides with the COVID regime shift the
-  exam explicitly calls out as the dangerous case. The notebook forward-fills uniformly across all
-  three affected countries and relies on the flag column to let a model *potentially* learn to
-  discount stale periods — but none of the linear/tree models in Section 4 actually use
-  `x11_stale` as a feature (it was carried through the pipeline for transparency, not fed into any
-  model), so in practice nothing currently protects the models from `country_12`'s stale carry-
-  forward during exactly the regime shift the exam warns about most.
-- **Extended file's 7 gappy columns**: forward-filled, but — as noted above — never used as
-  features at all, so this treatment is likewise inert for the reported results.
-- **Duplicate detection** between curated and extended files used an exact-match tolerance of
-  `atol=rtol=1e-6` with a `mask.sum() >= 100` overlap requirement before testing. The tight
-  tolerance was deliberate — the exam says the extended file duplicates curated series *exactly*,
-  so I wanted to catch only true duplicates, not merely highly-correlated-but-distinct series; a
-  looser tolerance risked false positives, a much tighter one risked missing genuine duplicates
-  with trivial floating-point differences.
+### Evaluation design
+- **Out-of-sample window:** January 2010–December 2024, fixed in advance.
+  - Initial training starts in 2001 for characteristics (the target needs 12 months) and 2002 for macro (the global z-score needs 24). The common-sample comparison is reported.
+  - Not done: robustness to other split dates.
+- **Refits:** every January (Lecture 5 uses `step = 12`); expanding, and rolling over 120 months. The rolling window is selected by month position (not calendar offset). Not done: other rolling lengths.
+- **Benchmarks** computed once from all returns:
+  - the pooled trailing mean through t−1 (the exam's / HW5's convention applied to the panel);
+  - zero;
+  - a class trailing mean for the by-class tables.
 
-### Out-of-sample split: December 2009 / January 2010 (120mo train, 180mo OOS)
-- This date is a **free design choice** the exam explicitly hands to you ("fix the out-of-sample
-  window... in advance, and say why you chose them") — it is not dictated by the exam, and a
-  materially different cutoff (2008, 2012, even a 60/40 split) would be equally legitimate if
-  justified. My stated rationale (10 years is enough history against a ~23-column feature set；15
-  years of OOS spans the 2010s recovery, the 2015–16 selloff, the 2018 vol spike, COVID, and the
-  2022 hiking cycle) is a real justification, but **no robustness check across alternative cutoff
-  dates was performed** — I did not verify that shifting the split by a year or two either
-  direction preserves the "everything is negative" conclusion, though given how uniformly negative
-  every model/scheme/feature-set combination came out, I'd be surprised if a nearby cutoff choice
-  overturned it.
+  $R^2_{OOS} = 1-\mathrm{SSE}_{model}/\mathrm{SSE}_{bench}$ (Lecture 4), plus a Newey–West t-statistic of the monthly loss difference. A vol-scaled $R^2$ is also reported, because class A carries 88% of the raw-return benchmark SSE.
+- **Tuning (training data only).**
+  - *Ridge and Lasso:* standardized inside a pipeline, with the penalty re-chosen at every refit on the last 36 months of that refit's training window (Lecture 5 pp.49–55). Lasso grid $2^{-10}$ to $2^{-1.3}$ (Lecture 5 p.53; the top sets every slope to 0). Ridge grid $10^0$ to $10^7$, spanning effectively OLS to effectively the null model. The choice hits both ends in different years, which we report as instability rather than hide.
+  - *Boosting:* depth 2, learning rate 0.05, rounds (≤ 300) chosen on the same validation block (Lecture 8).
+  - *Random forest:* 200 trees. Depth {2, 4, 8} × minimum leaf {20, 100, 500} chosen **once per feature set** on the initial training block (fit before 2007, validate 2007–09): chars-only (8, 100), chars+macro (4, 20). It is not re-tuned at each refit, because the forest is too slow for that; not done.
+- **Reference model:** intercept-only (no predictors), under both schemes.
+- **Global vs country macro (Q2 asks about each):** chars, chars+global, chars+country and chars+all on one common sample (training from 2002), for OLS/Ridge/Lasso (both schemes) and boosting (expanding), with Newey–West t-statistics. The positive country-only rolling cells get their own placebo test.
+- **Search size reported:** 22 main backtests, 7 robustness runs, 28 macro-split runs, 20 + 10 placebo runs, 10 noise-control runs, per-class Lasso for 2 feature sets (8 class-level backtests), 10 forecast portfolios plus 2 rule variants.
 
-### Refit cadence (`refit_every=12`) and rolling window length (`window=120`)
-- **Annual refit** or both expanding and rolling schemes — not specified by the exam; chosen to
-  match the cadence Lecture 5's own worked macro-forecasting example uses (`step=12`), and as a
-  practical middle ground between refitting every month (expensive, likely unnecessary given how
-  slowly macro/characteristics move) and refitting only once (too stale for a 15-year OOS window).
-- **Rolling window = 120 months**, matching the initial training block length, chosen so the
-  expanding and rolling schemes are directly comparable (rolling starts at the same size expanding
-  does, then stays fixed while expanding grows). **Not tested:** a shorter rolling window (e.g. 60
-  months) — plausibly would show *worse* rolling-window performance still, given the already-
-  visible pattern that less training data per refit hurts (especially macro-inclusive) models, but
-  this was not verified.
+### Placebo
+- Every macro series is circularly shifted by 12, 24, 36, 48 and 60 **months** on the (country, month) grid. The exam names 36 months and asks for more than one shift; the rest are our choice. The roll runs over the months where macro exists, so the same rows are used as in the real run. A check line prints the effective shift.
+- Run for OLS, Ridge, Lasso and boosting (expanding). Also run by class (OLS, Lasso), and for the country-only rolling models.
+- **Noise control:** persistent AR(1) noise built exactly like the macro block, five seeds, for OLS and Lasso. It has 4 global series, 7 country levels, and 7 differentials against `country_7`'s noise (zero for the `country_7` assets). This tests whether real macro hurts merely because of its structure.
+- Not done: a finer grid of shifts, or a distribution of placebo scores.
 
-### Model hyperparameters — the single biggest simplification in Problem 3
-- **Update:** Ridge and Lasso penalties are no longer hardcoded guesses — as of the post-
-  verification fix, they're chosen by a grid search validated on a held-out 2007–2009 sub-block
-  of the training period (train on 2000–2006, validate on 2007–2009, never touching 2010+),
-  selecting `RIDGE_ALPHA=100.0` and `LASSO_ALPHA=0.05` from small grids ({0.1,1,10,100} and
-  {0.005,0.01,0.05,0.1} respectively). This is a real, if modest, improvement over the original
-  fully-hardcoded values (which happened to use `alpha=10.0` for Ridge, since revised) — but it
-  is still **one fixed pair of values reused across every refit date in every scheme**, not a
-  per-refit re-tuning. **RF (`n_estimators=200, max_depth=4, min_samples_leaf=20`)** and **GBRT
-  (`n_estimators=100, max_depth=2, learning_rate=0.05`)** remain informal, un-validated judgment
-  calls — no grid search was run for either. This is still *not* the fully rigorous approach
-  Lecture 5 itself demonstrates (time-ordered cross-validation to choose the penalty *at each
-  refit*, e.g. via `LassoCV` inside an expanding-window loop) — I judged that adding a full
-  nested-CV search *inside every one of the ~15 annual refits, for every model*, was outside a
-  reasonable scope/time budget for this exercise, and chose one validated (linear) or reasoned
-  (tree) hyperparameter set applied throughout instead. **This is still a real limitation**: the
-  reported numbers reflect one point in hyperparameter space each, not the best each model family
-  could achieve with proper per-refit
-  tuning. If your own solution tunes hyperparameters via nested time-ordered CV, expect your
-  numbers to differ from this notebook's, and don't assume this notebook's fixed choices are
-  optimal — they are reasonable, not optimized.
-- RF's tree count (200) is lower than Lecture 8's own California-housing example (300) — chosen
-  for speed given how many total refits the full grid requires (5 models × 2 feature sets × 2
-  schemes × 15 annual refits), leaning on Lecture 8's own finding that forest performance is "flat
-  after about fifty trees" to justify that the difference between 200 and 300 is unlikely to
-  matter much.
-- GBRT's `max_depth=2` (shallower than sklearn's default of 3) and `learning_rate=0.05` (slower
-  than the default 0.1) were chosen deliberately in the spirit of Lecture 8's "shallow trees, high
-  bias, low variance" boosting recipe — but, per the point above, were not tuned against this
-  specific data via a validation search; they are an out-of-the-box-but-thoughtful choice, not an
-  optimized one.
+### Pooled vs per-class
+- Lasso on both feature sets. Each class's penalty is tuned on its own validation block, and all runs are scored on the same benchmark.
+- Not done: the other model families.
 
-### Placebo test: shifts of 12, 24, 36 months
-- These three shift values are exactly the ones the exam's own text suggests as an example ("try
-  more than one shift"); I did not search a wider or finer grid of shift values (e.g., every shift
-  from 1 to 60 months) to map out a fuller "spurious correlation profile" — a reasonable extension
-  not performed here.
-- **Implementation**: `np.roll` (a *circular* shift) applied within each country for country-level
-  macro, and across the date-ordered unique global-macro series for global macro. A circular shift
-  preserves each column's full empirical distribution and its autocorrelation structure exactly —
-  this was deliberate, because the point of the placebo is specifically to show that a
-  *persistent-but-wrongly-dated* series can look almost as good as the real one; a plain random
-  shuffle would destroy the persistence and make for a much weaker (too-easy-to-beat) placebo.
-- **The actual result surprised the initial draft of the write-up** — an earlier pass (before a
-  final correctness check) mis-stated which shift value did best; the corrected version in the
-  saved notebook states, accurately, that the 24- and 36-month placebos both outperform the real,
-  correctly-dated macro, which is if anything *stronger* evidence against macro carrying genuine
-  signal than a milder "one placebo comes close" finding would have been.
-
-### Portfolio construction: weight rule, cost assumption
-- **Forecast portfolio weight rule**: $w_i \propto \hat r_i$ (the model's return-scale forecast,
-  i.e., its vol-scaled $\hat y_i$ multiplied back by $\hat\sigma_{i,t-1}$), normalized to unit
-  gross exposure. This is one of several rules the exam explicitly allows ("positions proportional
-  to the forecast scaled by volatility, the sign of the forecast,... or your own rule"). **Worth
-  scrutinizing:** because $\hat r_i = \hat y_i \cdot \hat\sigma_{i,t-1}$ already re-introduces the
-  asset's volatility on the way out, this weight rule does *not* further divide by volatility at
-  the position-sizing stage — a Sharpe-style alternative, $w_i \propto \hat r_i/\hat\sigma_i$
-  (tilting toward the best forecast *per unit of risk*, rather than the largest raw forecast
-  return), was **not implemented or tested**, and might plausibly have produced a different (though
-  I'd guess still unimpressive, given how weak the underlying forecasts are) portfolio result.
-- **Transaction cost: 10 bps one-way per unit of monthly gross turnover** — an assumption, not
-  given or derived from the data. No sensitivity check against other cost levels (5bps, 20bps) was
-  performed; the qualitative ranking (forecast portfolio worst, risk parity best) is driven mostly
-  by *gross* Sharpe differences large enough that a different cost assumption is very unlikely to
-  reorder the ranking, but this was not explicitly verified.
-- **Benchmark weight formulas** (equal weight, risk parity $\propto 1/\hat\sigma_i$, momentum
-  $\propto \mathrm{sign}(\text{trailing-12mo return})/\hat\sigma_i$) are implemented exactly as the
-  exam's own formulas state, normalized to unit gross exposure by dividing by the sum of absolute
-  weights — the only sensible way to hit "unit gross exposure," so there's little discretion here.
-
-### Per-class vs. pooled: tested for one specification only
-- Section 6 compares pooled vs. per-class using **only** Lasso on chars+macro (the
-  best-behaved specification from Section 4) — not repeated across all 5 models × 2 feature sets.
-  This was a scope-management choice to keep the notebook's total runtime and length reasonable; a
-  full cross-product comparison was not performed, so "pooling wins" is demonstrated for one
-  representative case, not exhaustively for every model/feature combination.
-
-### R²_OOS reporting convention
-- Used **Lecture 4's exact formula**, $R^2_{OOS} = 1 - \mathrm{SSE}_{model}/\mathrm{SSE}_{benchmark}$,
-  with the benchmark being the trailing mean of `excess_return` computed from data strictly before
-  each forecast date and recomputed every month — not scikit-learn's `r2_score` (which benchmarks
-  against the *test-set* mean, a quantity that could not have been known in advance, and which the
-  AI Coding Guide explicitly flags as a common but wrong substitution). Both benchmarks the exam
-  asks for (trailing mean, and zero) are reported side by side throughout.
+### Portfolios
+- **Rule (choice):** $w \propto \hat y/\hat\sigma$ (= $\hat r/\hat\sigma^2$, the diagonal mean-variance weight), unit gross. With a constant forecast it collapses to risk parity, so deviations from risk parity measure the forecasts. Reported as diagnostics:
+  - the original $\hat y\hat\sigma$ rule (concentrates in class A);
+  - a demeaned, pure cross-sectional version.
+- **Primary model:** chosen **before the out-of-sample period**, as the lowest 2007–09 validation MSE of $y$ among the ten model × feature-set candidates (each fitted on data before 2007). This picks the random forest with macro. Caveat: the forest's own depth and leaf size were chosen on the same 2007–09 block, so its score there is optimistic. The pick is robust, though: every leaf-20 forest configuration (validation MSE 1.539–1.550) beats the next candidate, boosting with macro (1.562). All ten forecasts are also reported, each with its alpha against the benchmarks. (The original notebook had picked its model from the out-of-sample grid.)
+- **Benchmarks (given):** equal weight; risk parity $1/\hat\sigma$; TS momentum $\mathrm{sign}(\text{trailing 12m compounded return})/\hat\sigma$; all unit gross, monthly. They are computed in Section 3, before any model is fitted.
+- **Costs:** 10 bps per dollar traded, times turnover $\sum_i |w_{i,t} - w^{drift}_{i,t-1}|$ (weights drifted by returns). Sensitivity at 0, 5, 10, 20, 30 and 50 bps. The order of the three benchmarks never changes (risk parity > equal weight > TS momentum). The forecast portfolio leads only below about 7 bps and falls behind equal weight above about 13 bps.
+- **Exposure vs timing:** regression of each forecast portfolio on the three benchmarks (Newey–West).
+- **Significance of Sharpe differences:** Jobson–Korkie test with Memmel's correction, for every pair.
+- **Sub-periods:** 2010–14, 2015–19, 2020–24.
 
 ---
 
-## Summary: highest-priority items to challenge first
+## What to challenge first
 
-If you only have time to scrutinize a handful of decisions, these are the ones most likely to
-matter or most likely to differ from your own solution:
-
-1. **`SEED=0`** in Problem 2 — every specific number there is seed-dependent by design; compare
-   only the qualitative pattern against your own (real-seed) results, not the exact figures.
-2. **The extended 150-column macro file was cleaned but never used as model features** in
-   Problem 3 — a real scope-narrowing choice, not a bug. If your solution used it, your numbers
-   will differ and neither approach is "more correct" per the exam's own text.
-3. **The `country_7` differential features are identically zero for 28 of 50 assets** (all of
-   class A, plus one class-C and one class-D asset) — a structural consequence of using
-   `country_7` as both the class-A convention and the differencing base, not previously called out
-   in the notebook's own write-up.
-4. **No rigorous, per-refit hyperparameter tuning** for Ridge/Lasso/RF/GBRT in Problem 3 — fixed
-   values chosen once, informally, and reused throughout. This is the single biggest methodological
-   simplification in the whole project.
-5. **The forecast-portfolio weight rule doesn't re-divide by volatility** at the position-sizing
-   stage (it uses the return-scale forecast directly); a Sharpe-style alternative was not tested.
-6. **2.4(a)'s pre-night-1 synthetic-library initialization is a resolved ambiguity**, not a fact
-   given by the exam — check how you resolved the same ambiguity.
-7. **The OOS split date (2010), rolling window length (120mo), and refit cadence (12mo)** in
-   Problem 3 are all defensible-but-arbitrary design choices, not derived from the data or dictated
-   by the exam, and were not stress-tested against nearby alternatives.
-8. **Ridge/Lasso penalties are now validated (2007-09 held-out sub-block) but RF/GBRT depth and
-   leaf-size settings are still un-validated judgment calls** — after the post-verification fix,
-   the linear-model gap in item 4 is partially closed but the tree-ensemble gap is not.
-9. **Portfolio turnover is defined as the unhalved `Σ|Δw|`** (both legs of a rebalance), 2x a
-   "one-way" convention some texts use — stated explicitly as of the post-verification fix, with
-   the quantified effect of the alternative convention noted in Section 7.
-
-**Already found and fixed** (by an independent verification pass, not by you — but check the
-fix matches your own reading if you worked through 1.2 yourself): Q1.2's original written answer
-had the tree's split order backwards (claimed salary was the root split; it's actually age).
+1. **`SEED = 0`**: set your own before comparing Problem 2 numbers.
+2. **The portfolio Sharpe is fragile.** Fixing `x10`'s lag alone moved the Lasso-with-macro forecast portfolio from about 0 to 0.22 net Sharpe. The validation-chosen forest looks best before costs but has one of the worst out-of-sample $R^2$s. Trust the alpha regressions and the Sharpe-difference tests (none significant), not the ranking.
+3. **Forest settings are tuned once, not per refit; macro lags are the minimum** (except `x10`); **the extended file is unused.**
+4. **One out-of-sample window** (2010–2024). No alternative split was tested.
+5. **The 2007–09 validation block is a crisis period.** It favoured the macro-driven forest, which then did poorly out of sample. A different validation block could pick a different primary model.
+6. **Class-level $R^2$** depends heavily on the benchmark (pooled vs class mean vs zero). Read the three columns together with the intercept-only row.
