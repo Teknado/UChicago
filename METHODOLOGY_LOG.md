@@ -3,6 +3,7 @@
 A running record of **which approach was used for each problem, which assumptions were made, and why**. It is written so that every analytical choice can be traced to a lecture slide, to the exam notebook's own definitions, or to an explicitly flagged choice of ours. It is updated as work proceeds: every implemented step changes its status, and every change of plan gets a dated entry in §H.
 
 **Conventions**
+- Cell numbers (`cell 36`, …) refer to the **original** exam notebook. Extra code cells were inserted after some question cells (one step per cell, AIG §6.2), so live indices in the working notebook are higher.
 - `L5 p.56` = Lecture 5 PDF, page 56 (PDF page = slide number). `cell 36` = 0-based cell of `Final_Autumn_2026-1.ipynb`. `AIG §4` = AI Coding Guide section. `DP` = the pre-modelling data profile (descriptive facts about the files, §A.3).
 - Scope tags:
   - **[LEC]**: taught; the slide is cited.
@@ -62,23 +63,38 @@ Version-specific facts verified here:
 
 | ID | Decision | Alternatives considered | Assumptions | Justification | Status |
 |---|---|---|---|---|---|
-| P1-01 | Every accuracy comes from the notebook's `cv5` and `cv_acc()`, on shared folds. | `cv=5` as an integer. Rejected: that gives *unshuffled* folds, which are different folds. | Rows are unrelated people. | Shared split L8 p.53; K-fold for iid data L5 p.28, p.35; exam cells 3–4. A random split is legitimate for a cross-section (L8 p.45). | PLANNED |
-| P1-02 | The baseline is the majority rule "nobody purchases". It scores 257/400 = 64.25% pooled; per fold it is 63.75–65%, because stratification cannot split 257 and 143 evenly into 5. Equality is asserted on integer counts. | `DummyClassifier`. Not taught and not needed. | — | L6 p.57; L8 p.30 root [257, 143]; L1 p.81. | PLANNED |
-| P1-03 | Size selection: pick the highest CV accuracy over {2, 3, 4, 6, 8, 12}. **Exact ties** (the same integer number of people correct) go to the smaller size. The unpruned tree is a reference, not a candidate. | A 1-SE or "within noise" tolerance. Rejected: the 1-SE rule appears only in a figure legend (L5 p.46) and is not taught, and the exam's rule is literal. | — | Size chosen out of sample L8 p.29, p.32; parsimony L5 p.25, L4 p.23. The chosen score won a 6-way search, so it is disclosed as slightly optimistic (L4 p.43, L5 p.57). | PLANNED |
-| P1-04 | **REVISED.** Differences between models are judged from the 5 per-fold scores, their spread (sd, min–max) and the count of folds won or lost, against the resolution of 1 person = 1.25 pp per fold and 0.25 pp pooled. | A paired per-person SE with a "< 2 SE means indistinguishable" rule. **Rejected in review**: it is effectively McNemar's test, which is not taught. | Folds share training rows, so the spread is descriptive only. | The course compares CV numbers directly and shows fold or tree spread (L5 p.46 error bars; L8 p.45 ±1 sd). | PLANNED |
-| P1-05 | The chosen tree is refit on **all 400 rows** before plotting. | Plotting one CV fold's tree. Rejected: CV chose a *size*, and each fold tree saw only 320 people. | — | Refit on all data at the chosen tuning value, L5 p.36; L8 p.33 does exactly this (root `samples = 400`). | PLANNED |
-| P1-06 | The 1.2 answer is exactly one or two plain sentences. Thresholds are translated (Age ≤ 42.5 → "42 or younger"; sklearn thresholds are midpoints and the data are integers or multiples of $1,000). It says "mostly" rather than "only", because 9 of the 241 low-salary young people bought in L8's version. | — | If k* = 3 the tree should reproduce L8 p.33; that is checked, not assumed. | L8 p.25, p.33–34 (reading the tree; data plane); L8 p.17 (leaf probability). | PLANNED |
-| P1-07 | **REVISED.** The 1.3 explanation keeps the two ensembles apart. A forest *averages away variance*; boosting *adds shallow trees to remove bias*. With a near-rectangular 2-variable boundary and 400 people, a small tree leaves little of either. GB runs at untuned defaults (ν = 0.1, depth 3, 100 rounds). | "Ensembles mainly remove variance" for both. **Rejected in review**: it contradicts L8 p.51 for boosting. | Default hyper-parameters as fixed by the exam. | L8 p.40–45 and p.51 (bagging vs boosting are opposites); L8 p.50–52 (ν and B are tuning parameters); L8 p.54–55 (out-of-the-box boosting lost to the forest). | PLANNED |
-| P1-08 | 1.4 uses `permutation_importance(..., scoring='accuracy', n_repeats=50, random_state=7034)` on the held-out 30%. It is compared with MDI through a side-by-side table and a bar chart, and the mechanism is tested with split counts and distinct values per feature (Salary 117, Age 43, Gender 2). | `n_repeats=5` (the default). Too few for a 120-row test set, where accuracy moves in 0.83 pp steps. | The held-out accuracy of the 70/30 forest is labelled *diagnostic*: cell 3 reserves "reported accuracy" for 5-fold CV. | L8 p.47, p.56 (MDI is in-sample); p.57 (repeat and average; "answers the question you actually asked"); p.58 (why the two rankings disagree); p.60 (importance has no sign). | PLANNED |
-| P1-09 | 1.5 is text only. It covers look-ahead and dependence between neighbouring months; the direction of the error (upward, i.e. optimistic, in expectation); the fix (walk-forward train → validation → test, lagged predictors, per-window preprocessing, a training-period majority benchmark); and why removing `shuffle` alone is not enough. Mechanisms that are our own reasoning are labelled as such. | A simulated demonstration. Not needed ("if any"). A purging gap is [OUTSIDE SCOPE] and unnecessary for a one-month target. | — | L5 p.27, p.48, p.49–52, p.56, p.58 #3, p.59; L6 p.30; L1 p.82; L4 p.43. | PLANNED |
+| P1-01 | Every accuracy comes from the notebook's `cv5` and `cv_acc()`, on shared folds. | `cv=5` as an integer. Rejected: that gives *unshuffled* folds, which are different folds. | Rows are unrelated people. | Shared split L8 p.53; K-fold for iid data L5 p.28, p.35; exam cells 3–4. A random split is legitimate for a cross-section (L8 p.45). | VERIFIED |
+| P1-02 | The baseline is the majority rule "nobody purchases". It scores 257/400 = 64.25% pooled; per fold it is 63.75–65%, because stratification cannot split 257 and 143 evenly into 5. Equality is asserted on integer counts. | `DummyClassifier`. Not taught and not needed. | — | L6 p.57; L8 p.30 root [257, 143]; L1 p.81. | VERIFIED |
+| P1-03 | Size selection: pick the highest CV accuracy over {2, 3, 4, 6, 8, 12}. **Exact ties** (the same integer number of people correct) go to the smaller size. The unpruned tree is a reference, not a candidate. | A 1-SE or "within noise" tolerance. Rejected: the 1-SE rule appears only in a figure legend (L5 p.46) and is not taught, and the exam's rule is literal. | — | Size chosen out of sample L8 p.29, p.32; parsimony L5 p.25, L4 p.23. The chosen score won a 6-way search, so it is disclosed as slightly optimistic (L4 p.43, L5 p.57). | VERIFIED |
+| P1-04 | **REVISED.** Differences between models are judged from the 5 per-fold scores, their spread (sd, min–max) and the count of folds won or lost, against the resolution of 1 person = 1.25 pp per fold and 0.25 pp pooled. | A paired per-person SE with a "< 2 SE means indistinguishable" rule. **Rejected in review**: it is effectively McNemar's test, which is not taught. | Folds share training rows, so the spread is descriptive only. | The course compares CV numbers directly and shows fold or tree spread (L5 p.46 error bars; L8 p.45 ±1 sd). | VERIFIED |
+| P1-05 | The chosen tree is refit on **all 400 rows** before plotting. | Plotting one CV fold's tree. Rejected: CV chose a *size*, and each fold tree saw only 320 people. | — | Refit on all data at the chosen tuning value, L5 p.36; L8 p.33 does exactly this (root `samples = 400`). | VERIFIED |
+| P1-06 | The 1.2 answer is exactly one or two plain sentences. Thresholds are translated (Age ≤ 42.5 → "42 or younger"; sklearn thresholds are midpoints and the data are integers or multiples of $1,000). It says "mostly" rather than "only", because 9 of the 241 low-salary young people bought in L8's version. | — | If k* = 3 the tree should reproduce L8 p.33; that is checked, not assumed. | L8 p.25, p.33–34 (reading the tree; data plane); L8 p.17 (leaf probability). | VERIFIED |
+| P1-07 | **REVISED.** The 1.3 explanation keeps the two ensembles apart. A forest *averages away variance*; boosting *adds shallow trees to remove bias*. With a near-rectangular 2-variable boundary and 400 people, a small tree leaves little of either. GB runs at untuned defaults (ν = 0.1, depth 3, 100 rounds). | "Ensembles mainly remove variance" for both. **Rejected in review**: it contradicts L8 p.51 for boosting. | Default hyper-parameters as fixed by the exam. | L8 p.40–45 and p.51 (bagging vs boosting are opposites); L8 p.50–52 (ν and B are tuning parameters); L8 p.54–55 (out-of-the-box boosting lost to the forest). | VERIFIED |
+| P1-08 | 1.4 uses `permutation_importance(..., scoring='accuracy', n_repeats=50, random_state=7034)` on the held-out 30%. It is compared with MDI through a side-by-side table and a bar chart, and the mechanism is tested with split counts and distinct values per feature (Salary 117, Age 43, Gender 2). | `n_repeats=5` (the default). Too few for a 120-row test set, where accuracy moves in 0.83 pp steps. | The held-out accuracy of the 70/30 forest is labelled *diagnostic*: cell 3 reserves "reported accuracy" for 5-fold CV. | L8 p.47, p.56 (MDI is in-sample); p.57 (repeat and average; "answers the question you actually asked"); p.58 (why the two rankings disagree); p.60 (importance has no sign). | VERIFIED |
+| P1-09 | 1.5 is text only. It covers look-ahead and dependence between neighbouring months; the direction of the error (upward, i.e. optimistic, in expectation); the fix (walk-forward train → validation → test, lagged predictors, per-window preprocessing, a training-period majority benchmark); and why removing `shuffle` alone is not enough. Mechanisms that are our own reasoning are labelled as such. | A simulated demonstration. Not needed ("if any"). A purging gap is [OUTSIDE SCOPE] and unnecessary for a one-month target. | — | L5 p.27, p.48, p.49–52, p.56, p.58 #3, p.59; L6 p.30; L1 p.82; L4 p.43. | VERIFIED |
 
-**Known-answer checks for P1:**
+**Results (implemented and run 2026-09-27; the notebook runs Problem 1 in about 20 s):**
+- **1.1.**
+  - Baseline: 257/400 = 64.25% (63.75–65.00% by fold).
+  - Unpruned tree: 85.00% CV. It has 61 leaves and depth 14, and is 399/400 correct in sample.
+  - Sweep: 2 leaves 83.50%, 3 leaves 90.75%, 4 leaves 90.75%, 6 leaves 89.50%, 8 leaves 88.25%, 12 leaves 87.50%.
+  - CV prefers **3 leaves**. It ties with 4 leaves, and the two make identical out-of-fold predictions, so the tie rule picks the smaller.
+- **1.2.** The tree is Age ≤ 42.5 → EstimatedSalary ≤ 90,500 → leaves [232, 9], [7, 37] and [18, 97]. That is L8 p.33 exactly. Gender is not used. All five fold trees use the same two splits.
+- **1.3.** Random forest 88.75%, gradient boosting 89.00%. Neither beats the 3-leaf tree; fold by fold the gaps are mixed and within the tree's 85–95% fold range.
+- **1.4.** MDI ranks Salary (0.519) ahead of Age (0.470). Held-out permutation ranks Age (25.5 pp) ahead of Salary (17.1 pp). Gender is last in both. Supporting evidence for the mechanism:
+  - split counts: Salary 5,623 vs Age 4,751;
+  - distinct values: 117 vs 43;
+  - permutation on the training rows ranks Salary first too, 28.8 vs 27.0 pp.
+- **1.5.** Conceptual answer, no code.
+
+**Known-answer checks for P1 (all passed):**
 - 400 rows, 257/143;
 - the baseline, asserted on counts;
 - the unpruned 400-row tree against L8 p.30: about 62 leaves, with one conflicting cell, so 399/400 correct in sample;
 - if k* = 3, the tree equals L8 p.33;
 - in-sample > CV for every size;
 - MDI sums to 1.
+- Every number in the answer cells is printed by a code cell, or is a rounding of one or arithmetic on one. This was checked by script.
 
 ---
 
@@ -255,6 +271,10 @@ Each change is recorded with its date, what changed, why, and its effect on resu
 |---|---|---|---|
 | 2026-09-27 | Added PCR (core), lasso moved to core (M3 × 3 schemes), per-class ridge M3, deep-forest extras, the `x10` sensitivity and leak demonstration, and diversification diagnostics | External review, §J | Plan-stage only; search size 27 → 38 candidates; estimated runtime ≈ 15 min |
 | 2026-09-27 | SEED = 2694, 2.1 committed, scope (b), pooled benchmark, 10 bp costs, literature list | Student's answers | Settles P2-02, P3-05, P3-15 and the write-up sources |
+| 2026-09-27 | **Problem 1 implemented.** Cell 4 gets the G-01 data-path line. Five extra code cells were added: the sweep and its figure, the region plot, and the two figure cells for 1.3 and 1.4. | Plan approved | No change of method |
+| 2026-09-27 | 1.4: the boxplot of shuffle drops was replaced by a dot strip with means | `boxplot(vert=…)` is deprecated in matplotlib 3.11, and `tick_labels` does not exist before 3.9, so the course version could fail | Presentation only |
+| 2026-09-27 | 1.2: region colours set to match `plot_tree` (orange = no purchase, blue = purchase) | Consistency between Figures 1.2a and 1.2b | Presentation only |
+| 2026-09-27 | An answer draft said the 1.4 forest's trees have "about 50 leaves". That figure came from the forest fitted on all 400 people. A print for the 1.4 forest was added (38.2) and the text corrected | The every-number-from-a-cell check (G-02) | Wording only |
 
 ---
 
