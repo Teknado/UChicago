@@ -1,6 +1,6 @@
 # Final Project Plan — BUSN 41210 Financial Analytics, Autumn 2026
 
-Status: **plan only — awaiting your approval. No notebook cell has been written or run.**
+Status: **plan only.** Revised on 2026-09-27 after an external review (responses in `METHODOLOGY_LOG.md` §J). No notebook cell has been written or run. Coding starts only when you say go.
 Companion document: [`METHODOLOGY_LOG.md`](METHODOLOGY_LOG.md) (the running justification log; every decision below has an entry there with alternatives, assumptions and evidence).
 
 **How to read the citations.** `L5 p.56` = Lecture 5 PDF, page 56 (PDF page = slide). `cell 36` = cell 36 of `Final_Autumn_2026-1.ipynb` (0-based). `AIG §4` = AI Coding Guide section 4. Items tagged **[EXAM-DEFINED]** are required or defined by the exam notebook but not taught in any lecture (VaR, kurtosis, Sharpe ratio, risk parity, TSMOM, transaction costs, the placebo). Items tagged **[OUR CHOICE]** are design decisions with no single lecture source; the log records why. Nothing outside the lectures and the exam's own definitions is used unless it is listed under the open questions at the end.
@@ -47,8 +47,8 @@ Non-CV accuracies (in-sample, training folds, the 1.4 held-out 30%) are always l
 
 | Part | Method | Lecture grounding |
 |---|---|---|
-| **Setup** | `SEED` = last four digits of your student ID (written without a leading zero). One `np.random.SeedSequence(SEED)` spawns named independent streams (one desk; 1,000 desks; each 2.3 experiment; 2.4a; 2.4b), so every cell is reproducible on re-run. Night indexing: night 1 fits the real library (sample variance exactly 1); nights 2…2,500 each fit the previous night's 500 scenarios → 2,499 random draw-and-refit steps. | Unbiased s² with ddof = 1 L2 p.56–57; VaR = 2.326 σ̂ **[EXAM-DEFINED]** cell 20 |
-| **2.1** | You write 2–3 sentences in cell 23 before any code; it is never edited afterwards and 2.3 quotes it. | L2 p.78; L4 p.26 |
+| **Setup** | `SEED = 2694` (the last four digits of your student ID). One `np.random.SeedSequence(SEED)` spawns named independent streams (one desk; 1,000 desks; each 2.3 experiment; 2.4a; 2.4b), so every cell is reproducible on re-run. Night indexing: night 1 fits the real library (sample variance exactly 1); nights 2…2,500 each fit the previous night's 500 scenarios → 2,499 random draw-and-refit steps. | Unbiased s² with ddof = 1 L2 p.56–57; VaR = 2.326 σ̂ **[EXAM-DEFINED]** cell 20 |
+| **2.1** | Your prediction, supplied on 2026-09-27, goes into cell 23 **verbatim** before any Problem 2 code runs. It is never edited afterwards. 2.3 quotes it and reconciles each of its claims with the measured numbers, whichever way they come out. | L2 p.78; L4 p.26 |
 | **2.2** | One desk exactly as the manual (fit `var(ddof=1)`, draw 500 from N(0, σ̂²) — scale = σ̂, not σ̂² — replace, report). Plot log σ̂² vs night; report σ̂² and VaR on night 2,500. Then 1,000 desks vectorised (one 1000 × 500 matrix per night, ≈ 35 s for 2,500 nights); night-2,500 mean, median, 5th/95th percentiles, max of σ̂²; fraction with VaR < truth/10 (with its Monte-Carlo SE as the sample SD of the 0/1 indicator / √1000); percentile rank of the one desk; where the story's 2.8% → 0.24% sits. A unit test checks the literal loop equals the vectorised version. | Monte-Carlo sampling distributions from a known truth L2 p.59–70, p.78–79, L4 p.26–27; log scale for multiplicative change L3 p.48–49; SE of a mean L2 p.63 |
 | **2.3** | (i) Martingale check: 200,000 desks from the same σ̂²ₜ (two starting values), one step, average; report mean ratio with a 95% CI and say whether it contains 1 (reporting rule fixed in advance; non-rejection is "consistent with", not "equals"). (ii) Average nightly change in log σ̂² for n = 50, 500, 5,000 (500 desks × 500 nights each, SEs computed), and propose the formula relating it to n from the measurements. (iii) Histogram of log σ̂² across the 1,000 desks on night 2,500. (iv) Reconciliation table: expectation, median, 1,000-desk mean, share of the sum held by the ten largest desks; one paragraph; reconcile with your 2.1. Any theory beyond the lectures is a clearly labelled supplementary note, with any number it quotes computed in a cell. | Unbiasedness L2 p.56; CI / t for a mean L2 p.81, p.84–86; unbiased ≠ precise L2 p.71–72; CLT L2 p.63–64; logs L3 p.48–49 |
 | **2.4(a)** | Each desk gets its own 500 real days = N(0,1) draws rescaled to sample variance exactly 1 (not demeaned — the smallest change that meets the rule). Library = those 500 real + tonight's 500 scenarios (1,000; last night's scenarios are replaced). Night-2,500 median, 5th/95th percentiles across 1,000 desks, side by side with 2.2; bands over nights on one plot. | same simulation design; degrees of freedom as information L2 p.57 |
@@ -72,9 +72,9 @@ A markdown "Design fixed before fitting" cell plus one printed constants dict, p
 | Schemes | static (fit once at 2010-12); **expanding** (primary; fixed start, refit each December → 14 refits); rolling (96-month window) | L5 p.48–51 (step 12, as in L5 p.51); cell 37 |
 | Tuning | Inside each training window only: three annual validation folds (fit on data up to year b−j, validate on year b−j+1, j = 3,2,1), mean fold MSE, ties → larger penalty, then refit on the whole window. Penalty parametrised as α/n so it means the same thing at every sample size. Chosen value must not sit at the grid edge (logged). | L5 p.48–52 (train → validation → test; alpha from validation only), p.35–36, p.27 & p.53 (grid edges), p.25 |
 | Target | y = r_{i,t} / σ̂_{i,t−1}, σ̂ = 36-month SD of the asset's own past excess returns (ddof = 1), computed by us (avoids `x5`'s 0.004 floor) | cell 37 (recommended target); constant-variance assumption L3 p.2–3; var(b) ∝ σ² L2 p.71–73; "calm months and panics" L2 p.80 |
-| Forecast benchmarks | Trailing mean of y through t−1, updated monthly (**pooled over assets = primary — see open question Q4**), per-class and per-asset versions always reported, and **zero**. Raw-return R² by class also reported against the literal per-asset trailing mean of raw returns. | cell 36; L4 p.45–46 ("why not out-of-sample Ȳ?"); L5 p.55–57 |
+| Forecast benchmarks | Trailing mean of y through t−1, updated monthly (**pooled over assets = primary**, as you confirmed), per-class and per-asset versions always reported, and **zero**. Raw-return R² by class also reported against the literal per-asset trailing mean of raw returns. | cell 36; L4 p.45–46 ("why not out-of-sample Ȳ?"); L5 p.55–57 |
 | Portfolio benchmarks | EW, risk parity (∝ 1/σ̂), TSMOM (∝ sign(12-month return)/σ̂); unit gross exposure; monthly rebalancing; computed and printed **before** any model | **[EXAM-DEFINED]** cell 36 rule 1 |
-| Search size | The full list of specifications is fixed here (≈ 22 core + ≤ 5 pre-listed extras) and printed next to every headline, with the Bonferroni critical value computed in a cell | L4 p.25–28; L5 p.57 ("the size of the search belongs next to the number") |
+| Search size | The full list of specifications is fixed here (29 core + 9 pre-listed extras = 38 candidates; §3.3–3.4) and printed next to every headline, with the Bonferroni critical value computed in a cell | L4 p.25–28; L5 p.57 ("the size of the search belongs next to the number") |
 | Expectations & power | Written down before computing (commit-before-compute); a short power calculation computed in a cell | L2 p.78; L4 p.26; var(X̄) = σ²/n L2 p.63 (flagged as our construction) |
 
 ### 3.1 Know your data (cell 37 step 1)
@@ -107,9 +107,10 @@ Grounding: L1 p.37–38, p.44 (`df.corr()` heat map); L1 p.35 (sorting as nonlin
 | Characteristics | **Within-class, within-month rank** of each lagged characteristic, scaled to [−0.5, 0.5] | Units differ by up to 3 orders of magnitude across classes; ranks are robust, bounded, parameter-free (cannot leak) and comparable for the penalty (L5 p.23; outliers L3 p.12–18). Within-class z-score as robustness (L7 p.23) |
 | Characteristic levels (secondary spec) | Each asset's own lagged characteristic as a trailing 60-month z-score of its own history | Ranks can only rank assets within a class; this adds a time-series channel so Q2's "macro adds" test is not the only timing channel |
 | Global macro `x6–x9` | log `x6`; trailing 60-month z-score (min 24 obs), then lag; enters with **class-specific slopes** | "Trailing information only" cell 37; interactions L3 p.53–54 |
-| Country macro | 6 curated series: short rate `x86` (replaces the look-ahead `x10`), inflation `x12`, FX `x13`, log `x14`, log `x15`, `x16`. Each is taken as a **differential vs country 7**, then turned into a **trailing z-score per country** so that static country gaps (fixed effects) are removed and only time variation enters. Classes B, C, D get their own country's values × class. **Class A gets none** (no natural country, cell 34; parsimony L4 p.23) | cell 37 (country 7 the natural base; differentials); country fixed effects would otherwise pose as macro (verification finding) |
+| Country macro | 6 series: short rate `x86` (from the extended file, replacing the look-ahead `x10`), and from the curated file inflation `x12`, FX `x13`, log `x14`, log `x15`, `x16`. Each is taken as a **differential vs country 7**, then turned into a **trailing z-score per country** so that static country gaps (fixed effects) are removed and only time variation enters. Classes B, C, D get their own country's values × class. **Class A gets none** (no natural country, cell 34; parsimony L4 p.23) | cell 37 (country 7 the natural base; differentials); country fixed effects would otherwise pose as macro (verification finding) |
 | `x11` | Diagnosed and rebuilt (`x86 − x12`, rebuild quality reported), **not added as a column**: it is an exact linear combination of two included series | cell 37; exact collinearity L3 p.40 |
 | Extended file | Used only for the audit and for `x86`. Never screened against returns | multiple testing: "you will always find something" L4 p.25–28; screening then validating is cheating L5 p.41 |
+| `x10` sensitivity (curated file only) | A pre-listed extra replaces `x86` with the curated `x10` at a **correct** lag of 14 months, so each month uses a completed prior-year average. A separate **leak demonstration** uses `x10` at the naive 1-month lag and is reported only in the leakage appendix, never as a result or a candidate. | Shows the result does not depend on using the extended file, and shows what the T1 trap would have done. L5 p.58 #2; cell 34 ("Getting this wrong silently introduces look-ahead") |
 | Class intercepts | Class dummies (A reference) **left unpenalised**; ridge/lasso penalise only the predictor slopes (implemented exactly by within-class demeaning — verified on synthetic data) | Ridge penalises slopes, not the intercept L5 p.12; class intercepts L3 p.50; dummy coding L3 p.45, p.51–52 |
 | Outside data | None | search size; release-date documentation (cell 34) |
 
@@ -123,16 +124,21 @@ The notebook ends this section with the predictor table and counts, as cell 37 a
 
 ### 3.3 Models × evaluation schemes (cell 37 step 3)
 
-- **Models:** OLS (unpenalised baseline and kitchen-sink warning, L4 p.47–48); **ridge, the primary** ("suitable when features are weak and should still contribute", L5 p.60; standardise inside the window, L5 p.23); lasso as a pre-listed extra (L5 p.17–24); random forest (300 trees, max_features = 1/3, minimum leaf 200, untuned — L8 p.43–45, p.55, p.61).
-  - The lecture's out-of-the-box default is the tree ensemble (L8 p.61–62). Linear wins "when the signal really is weak and linear — which, in asset pricing, is more often than you would like". So the RF is run on the identical harness as the check.
-  - The 200-row leaf is our low-signal choice, flagged as a departure from L8 p.44's "grown deep".
-  - Not used: KNN regression (not taught; curse of dimensionality, L6 p.37), neural nets, boosting (off; tuning budget is a leakage risk, L8 p.55), elastic net (formula only, L5 p.11), and clustering (the class labels are known, L7 p.4).
-- **Grid:**
-  - M1-OLS;
-  - {OLS, ridge, RF} × {M2, M3} × {static, expanding, rolling};
-  - ridge-expanding on global-only and country-only macro;
-  - per-class ridge on M2;
-  - that is 22 core specifications.
+- **Models (core):**
+  - OLS: the unpenalised baseline and the kitchen-sink warning (L4 p.47–48).
+  - **Ridge, the primary model:** dense shrinkage, "suitable when features are weak and should still contribute" (L5 p.60). Standardised inside the window (L5 p.23).
+  - **Lasso:** sparse selection, "best when you believe only a few features matter" (L5 p.60, p.17–24).
+  - **PCR, added after review:** dense factors. It uses a StandardScaler, PCA(K) and OLS on the components, all fitted inside each training window and inside each validation fold. K is a tuning parameter chosen on the same validation folds as α, from {1, 2, 3, 4, 5, 6, 8, 10}. PCA is taught in L1 p.45–74, including as "pre-treatment for further ML" (L1 p.46). PCR is listed by the exam (cell 33) and appears in the GKX horse race (L1 p.36). L8 p.61 recommends fitting on principal components in high dimension. Standardising before PCA is our choice, flagged: L1 only demeans, and the columns here have different scales (L5 p.23).
+  - Random forest: 300 trees, max_features = 1/3, minimum leaf 200, untuned (L8 p.43–45, p.55, p.61). The 200-row leaf is our low-signal prior; the leaf mean's standard error is about 0.07 in y units against about 0.45 for a 5-row leaf. A deep L8-recipe forest runs alongside it as an extra (§3.4), so the bias–variance trade-off is shown empirically.
+  - The lecture's out-of-the-box default is the tree ensemble (L8 p.61–62). Linear wins "when the signal really is weak and linear — which, in asset pricing, is more often than you would like". So the forest runs on the identical harness as the check.
+  - Ridge, lasso and PCR together give the dense-vs-sparse comparison. PCR and lasso run on M3 only: with five characteristics, M2 leaves nothing to compress or select (PCR with K = 5 is OLS).
+  - Not used: KNN regression (not taught; curse of dimensionality, L6 p.37), neural nets, boosting (off; the tuning budget is a leakage risk, L8 p.55), elastic net (formula only, L5 p.11), and clustering (the class labels are known, L7 p.4).
+- **Grid (core, 29 specifications):**
+  - M1-OLS, expanding;
+  - {OLS, ridge, RF} × {M2, M3} × {static, expanding, rolling} (18);
+  - {lasso, PCR} × M3 × {static, expanding, rolling} (6);
+  - ridge-expanding on global-only and on country-only macro (2);
+  - per-class ridge on M2 and on M3, expanding (2). This tests pooled against segmented models for both the characteristic and the macro slopes.
 - **Reported:**
   - R²_OOS = 1 − SSE_model / SSE_benchmark against the trailing mean(s) and zero (L5 p.55–57), model × scheme, by class, by sub-period, with in-sample R² next to it (L4 p.47–48);
   - uncertainty as a **month-resampling bootstrap SE** (each month keeps its whole cross-section) and estimate ± 2 SE (L2 p.80, p.85). The month is the unit because all assets share each month's shocks.
@@ -148,11 +154,15 @@ The notebook ends this section with the predictor table and counts, as cell 37 a
   - 8 shifts. Every placebo value used at an OOS date is a real past observation, because no shift above 130 is used. For s ≥ 72, the trailing-z window at early OOS dates reaches wrapped values; this affects normalisation only and is disclosed;
   - a persistence table shows how correlated each shifted series stays with the truth.
   - Macro is credited only if its gain beats **all 8** placebos and is positive against the bootstrap SE (null logic from L4 p.26–28).
-- **Pre-listed extras (≤ 5):**
-  - lasso M3;
-  - macro lag 1 month;
-  - within-class z-score instead of rank;
-  - M2/M3 plus characteristic levels (the timing channel).
+- **Pre-listed extras (9, all under the expanding scheme):**
+  - PCR with fixed K = 3 and with fixed K = 5, as a sensitivity check on the tuned K (2);
+  - a deep forest on M2 and on M3, minimum leaf 5 ("grown deep", L8 p.44) (2);
+  - macro lag 1 month (1);
+  - within-class z-score instead of rank (1);
+  - M2 and M3 plus characteristic levels, the timing channel (2);
+  - curated-only macro, with `x10` at a correct 14-month lag instead of `x86` (1).
+- **Diagnostic only, never a candidate:** `x10` at the naive 1-month lag (the leak demonstration).
+- **Search size:** 38 candidate specifications. The Bonferroni critical value for 38 is computed in the notebook and printed next to every headline.
 - **Evaluation-only cuts:** excluding March–May 2020, and excluding the frozen-`x1` rows.
 
 ### 3.5 From forecasts to portfolios (cell 37 step 4) [EXAM-DEFINED metrics; costs are OUR CHOICE]
@@ -170,6 +180,10 @@ The notebook ends this section with the predictor table and counts, as cell 37 a
   - hand test β = 1 against RP;
   - average correlation of P1's weights with RP's and TSMOM's;
   - maximum single-asset weight and `asset_16` share reported.
+- **Cross-asset correlation and diversification (added after review):**
+  - Correlation block tables (4 × 4, class-averaged) and the share of variance explained by the first principal component of the return correlation matrix, for 2003–2010, 2011–2019 and 2020–2024. Block structure can change in crises (L1 p.42–44; eigenvalue shares L1 p.43). These are descriptive only; no portfolio rule is chosen from them.
+  - A class-risk-budget variant of RP and of P1. Inverse-volatility weights are used within each class, and each class sleeve is scaled by its own trailing 36-month volatility, so every class contributes equal ex-ante risk. The sleeve's volatility already reflects the correlation inside the class, so no covariance matrix is inverted. This addresses the concentration of unit-gross RP in the low-volatility classes (about 35–45% of gross in class D). [OUR CHOICE]
+  - Not done: covariance-optimised (mean–variance or minimum-variance) weights. Mean–variance optimisation is not taught. A 50 × 50 sample covariance from 36–96 months of data is rank-deficient or badly conditioned ("might have rank less than n if T < n", L1 p.63), so inverting it needs shrinkage machinery the course does not cover.
 
 ### 3.6 Leakage audit, runtime, write-up
 
@@ -180,9 +194,12 @@ The notebook ends this section with the predictor table and counts, as cell 37 a
   - the `x2`/`x5` identities;
   - one causality test: truncate the raw data after 2010-12, rebuild, and assert that features, σ̂, benchmarks and benchmark weights up to 2010-12 are unchanged;
   - identity tests: P1(ŷ ≡ 1) = RP.
-- **Runtime:** about 8–12 minutes serial on a 4-core machine (timed on synthetic arrays). No process pool.
+- **Runtime:** about 15 minutes estimated on a 4-core machine, serial except for the forest's own `n_jobs` (from synthetic-array timings; the deep forests add about 2 minutes). No process pool. The real runtime of each section will be printed.
 - **Write-up** (cell 38):
-  - Introduction: the question; why it matters for cross-country allocation; what the literature leads us to expect (see Q6); a preview.
+  - Introduction: the question; why it matters for cross-country allocation; a preview; and what the literature leads us to expect. The literature is the lecture sources (GKX, L1 p.36; the 0.3–0.5% monthly R²_OOS, L5 p.57; L8 p.62) plus these papers, which you approved and will verify:
+    - Gu, Kelly and Xiu (2020), *Empirical Asset Pricing via Machine Learning*, Review of Financial Studies;
+    - Asness, Moskowitz and Pedersen (2013), *Value and Momentum Everywhere*, Journal of Finance;
+    - Moskowitz, Ooi and Pedersen (2012), *Time Series Momentum*, Journal of Financial Economics.
   - Data: treatment of every trap; summary statistics; plots.
   - Methodology: reproducible from this section alone.
   - Results: in question order.
@@ -191,21 +208,16 @@ The notebook ends this section with the predictor table and counts, as cell 37 a
 
 ---
 
-## Open questions for you (each has a default; "defaults are fine" is a valid answer)
+## Your answers (received 2026-09-27)
 
-1. **SEED:** what are the last four digits of your student ID? Every Problem 2 number depends on it. (Problem 3 uses its own `P3_SEED = 7034` so it never overwrites `SEED`.)
-2. **2.1 commit-before-compute:** will you write your 2–3-sentence prediction yourself before I run any Problem 2 code? *Default: yes. I won't draft it, and I'll wait for it.*
-3. **Problem 3 scope:**
-   - (a) Core only: 22 specifications, 8 placebo runs, about 8 minutes of runtime.
-   - (b) Core plus the ≤ 5 pre-listed extras, about 12 minutes.
-   - (c) Something leaner still.
+| # | Question | Answer | Effect on the plan |
+|---|---|---|---|
+| 1 | SEED | **2694** | P2 streams come from `SeedSequence(2694)`. P3 keeps its own `P3_SEED = 7034` and never rebinds `SEED`. |
+| 2 | 2.1 prediction | Supplied | It goes into cell 23 verbatim before any P2 code runs. It is not edited afterwards, and 2.3 reconciles it with the numbers. |
+| 3 | P3 scope | **(b)** core plus extras, with PCR and the class-specific models added | 29 core + 9 extras = 38 candidates (§3.3–3.4) |
+| 4 | Primary benchmark | **Pooled trailing mean**, with per-asset, per-class and zero also reported | P3-05 settled |
+| 5 | Costs | **10 bp headline**, 0–50 bp grid, break-even cost | P3-15 settled |
+| 6 | Literature | GKX (2020), the 0.3–0.5% benchmark, Asness–Moskowitz–Pedersen (2013), Moskowitz–Ooi–Pedersen (2012) | §3.6 write-up |
+| 7 | Notebook | Either is allowed | In place in `Final_Autumn_2026-1.ipynb`; git history keeps the blank original |
 
-   *Default: (b).*
-4. **Primary trailing-mean benchmark for the vol-scaled panel target:**
-   - Pooled across assets. It is conservative (hardest to beat without the class premia), and it is what an intercept-only model refitted monthly would forecast.
-   - Per asset, each asset's own history. This is closer to the HW5 single-series harness, but noisier and therefore easier to beat.
-
-   All versions are reported either way. The question only decides which one the verdict is pinned to. *Default: pooled.*
-5. **Transaction costs** (not taught): uniform 10 bp headline with a 0–50 bp grid and break-evens, or did your course or homework specify a number? *Default: 10 bp plus the grid.*
-6. **Literature in the Introduction.** Cell 38 asks what the literature leads you to expect. The lectures give only Gu–Kelly–Xiu (L1 p.36) and the 0.3–0.5% R² benchmark (L5 p.57). May I also name canonical cross-asset papers (value/momentum "everywhere", carry, time-series momentum), clearly as background you would verify? *Default: lecture sources plus cell 33's own statement only.*
-7. **Where the answers go:** fill in `Final_Autumn_2026-1.ipynb` in place (git keeps the blank original), or work in a copy? *Default: in place.*
+Remaining before coding: your go-ahead.
