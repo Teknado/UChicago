@@ -221,3 +221,19 @@ The notebook ends this section with the predictor table and counts, as cell 37 a
 | 7 | Notebook | Either is allowed | In place in `Final_Autumn_2026-1.ipynb`; git history keeps the blank original |
 
 Remaining before coding: your go-ahead.
+
+---
+
+## Errata from the final audit (2026-09-27)
+
+The plan above is kept as approved. The final audit found these errors in it; the notebook and the methodology log use the corrected versions.
+- Citations use PDF pages; in Lectures 1, 5 and 8 the printed slide number can be lower.
+- "L2 p.91 (t of a mean)" should be L2 p.81; L2 p.91 is the t-statistic of a regression coefficient.
+- "Within-class z-score as robustness (L7 p.23)": L7 p.23 is about scaling for k-means; the z-score variant is our choice.
+- "ranks … comparable for the penalty (L5 p.23; outliers L3 p.12–18)": ranks cap the leverage of a characteristic value (L3 p.11–12); they do not bound the target.
+- "Ridge penalises slopes, not the intercept (L5 p.12)": the ridge objective penalises the slopes it contains; leaving the class intercepts out is our choice.
+- "boosting (off; the tuning budget is a leakage risk, L8 p.55)": the reason is runtime; tuning on forward folds would handle leakage.
+- "clustering (the class labels are known, L7 p.4)": L7 p.4 also lists discovery as a use of clustering; the decision not to cluster is a scope and value judgement (proposal P-J).
+- "coefficient paths … (L5 p.22 style)": L5 p.22 plots coefficients against the penalty, not across refits.
+- `x11`: not an exact combination of two included series; excluded for gaps and near-redundancy.
+
