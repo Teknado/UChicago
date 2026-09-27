@@ -257,6 +257,15 @@ Every number below is printed by a notebook cell; Table 3.31 collects them.
   - Sub-period α: −0.16% (t −0.37) in 2011–17, +1.36% (t 2.47) in 2018–24 (post hoc). P1 Sharpe 0.58 → 0.32; EW beats P1 in 2018–24 (0.53).
   - P3 (within-class long–short): gross Sharpe 0.08, net −0.11, turnover 34% a month. P1 rolling (not selected): 0.60.
   - Concentration: class D 60% of gross (RP 37%); asset_16 22% average, 42% maximum. Break-even costs 260 bp vs EW, 363 bp vs RP.
+- **Post-hoc additions (approved by the student after the final audit; none changes a verdict):**
+  - P-A macro inputs (Table 3.5b): `x6` implied-volatility type (peak 2008-11; corr 0.60 / 0.62 with trailing realised vol of classes A / C), `x12` CPI inflation (peaks in 2022–23 in 12 of 12 countries); at most 9% of any used series' changes fall in January.
+  - P-M: sd of y 1.05–1.09 across classes, 0.76 (2017) to 1.74 (2008) across years; decile means not monotone (Table 3.17b).
+  - P-C: benchmark-loss lag-1 autocorrelation 0.28; 12-month block-bootstrap SEs a median 1.19× the independent-month SEs; t with blocks: x10 variant 1.24, characteristics beyond class means −1.15, class means vs per-asset mean 3.06.
+  - P-H: forest − ridge M2 expanding −0.083% (SE 0.130%); |t| ≤ 1.01 in five of six pairs, static macro forest −2.08.
+  - P-D: best fixed penalty with hindsight: ridge M2 0.087%, ridge M3 0.086%, lasso 0.087%, PCR 0.088%, against 0.087% for class means; ridge and lasso choices reproduced exactly from the curves.
+  - P-G: characteristics carry at most 0.003 of the squared loadings of PCR's first three components.
+  - P-E (39th specification, Bonferroni 3.28): interactions add +0.012% (SE 0.089%), rank 6 of 9 against their own placebos: NO.
+  - P-B / P-L: six months with |studentized residual| > 2.5; without them α 0.69%, t 2.20 (reported, not used); bootstrap t(α) 1.74; corr(EW, RP) 0.93.
 
 ### E.6 Independent referee review of the first full run (2026-09-27)
 
@@ -305,7 +314,7 @@ Errors found and fixed (by the rule agreed with the student: fix errors directly
 | Guide: an audit row cited a check that cannot fail; "nothing is imputed"; long cells; no printed versions (minor) | Row corrected; wording corrected; the harness cell split into three; versions printed |
 | Log: "PDF page = slide number"; scree plot claimed; P2-05 cross-check claimed; stale §D text; garbled P1-06; G-05 head() (minor) | Corrected (this commit) |
 
-Proposed additions awaiting the student's decision: P-A … P-S (listed in `LECTURE_METHODS_P3.md`). The lecture-by-lecture catalogue of methods and why each was or was not used is `LECTURE_METHODS_P3.md`.
+Proposed additions: P-A … P-S (listed in `LECTURE_METHODS_P3.md` §6). The student approved nine (P-A, P-B, P-C, P-D, P-E, P-G, P-H, P-L, P-M); they are in the notebook as labelled post-hoc cells (§3.10 item 8) and their results are in §E.5. The other ten were not run (boosting, information criteria, clustering, directional accuracy and out-of-sample terciles on the student's decision; P-O–P-S as low value). The lecture-by-lecture catalogue of methods and why each was or was not used is `LECTURE_METHODS_P3.md`.
 
 ---
 
@@ -394,6 +403,7 @@ Each change is recorded with its date, what changed, why, and its effect on resu
 | 2026-09-27 | Wording corrected without changing any computation: turnover convention, class-risk-budget description, leaf-200 departure, citations, exam-cell references (now named sections), audit counts; one vacuous unit test removed | Referee review | Presentation only |
 | 2026-09-27 | Pre-registration timing stated honestly: the design was written in the development scripts before the ledger ran, but first committed (591c8ff) after the development ledger had run | Referee review: version control alone does not prove the order | Stated in Section 3.10 and the write-up |
 | 2026-09-27 | **Final audit corrections (§E.7).** Text, citations and descriptions corrected across Problems 1–3; Table 2.2's mean VaR entry fixed; Table 2.4b gains the VaR gap, gap/SE and the mean; Table 3.29 gains P1 minus its frozen version; the ±2 SE interval of the characteristics-beyond-class-means difference and the library versions are printed; the harness cell is split into three; the write-up is restructured as a paper | Student-requested final audit against the AI Coding Guide and the eight lectures | No pre-registered verdict changes. The Problem 2 mean-VaR entry changes from 3.56σ to the mean across desks |
+| 2026-09-27 | **Nine post-hoc additions** (P-A, P-B, P-C, P-D, P-E, P-G, P-H, P-L, P-M) added as labelled cells; the write-up, Table 3.31 and §3.10 updated | Approved by the student after the final audit | No verdict changes. The block bootstrap weakens two borderline results (x10 variant, characteristics beyond class means) and strengthens the per-asset one; the α's significance is shown to hinge on six months |
 
 ---
 
