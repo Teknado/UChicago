@@ -40,54 +40,76 @@ for s, t in enumerate(tmpl):
 report('structure: 41 cells, template cell types, exam cells unchanged (setup cells: data path; cell 21 fills in SEED)', p)
 
 # 2 ---------------------------------------------------------------- code
-def statements(code):
-    return [l.rstrip() for l in code.splitlines() if l.strip() and not l.strip().startswith('#')]
+import io as _io, tokenize as _tk
+def logic(code):
+    """Code lines with every string literal replaced by S and comments dropped: equal logic means only text changed.
+    Two stated structural edits are normalised away: the design table printed in full width, and the statsmodels
+    version added to the printed library versions."""
+    out = []
+    for line in code.splitlines():
+        if not line.strip() or line.strip().startswith('#'):
+            continue
+        try:
+            toks = list(_tk.generate_tokens(_io.StringIO(line + '\n').readline))
+            line = ''.join('S' if t.type == _tk.STRING else t.string for t in toks if t.type not in (_tk.COMMENT, _tk.NL, _tk.NEWLINE, _tk.INDENT, _tk.DEDENT, _tk.ENDMARKER))
+        except (_tk.TokenError, IndentationError, SyntaxError):
+            line = re.sub(r"'[^']*'|\"[^\"]*\"", 'S', line.strip())       # a line inside a multi-line call
+        line = line.replace('importsys,sklearn,statsmodels', 'importsys,sklearn').replace('cv=cv5,scoring=S,return_estimator', 'cv=cv5,return_estimator').replace('cv=cv5, scoring=S, return_estimator', 'cv=cv5, return_estimator')
+        if line == 'withpd.option_context(S,None):':
+            continue
+        out.append(line)
+    return out
 p = []
 for s in range(41):
     if new[s]['cell_type'] == 'code':
-        a = statements(RELABEL(src(old[s])).replace("cv=cv5, return_estimator=True)", "cv=cv5, scoring='accuracy', return_estimator=True)"))
-        b = statements(src(new[s]))
+        a, b = logic(src(old[s])), logic(src(new[s]))
         if a != b:
             p.append(f'cell {s}: ' + str([l for l in difflib.unified_diff(a, b, lineterm='', n=0)][:6]))
-n = sum(len(statements(src(c))) for c in new if c['cell_type'] == 'code')
-report(f'code: all {n} code lines equal the reference (only the eleven Table 3.31 labels and one explicit scoring= changed)', p)
+n = sum(len(logic(src(c))) for c in new if c['cell_type'] == 'code')
+report(f'code: all {n} code lines have the same logic as the reference (differences only inside strings: captions and labels; '
+       f'plus scoring=, the full-width design table and the statsmodels version)', p)
 
 # 3 ---------------------------------------------------------------- outputs
-TIMING = re.compile(r'(\d+(?:\.\d+)?) ?(s|min|seconds)\b')
-def outs(c):
-    text, imgs = [], []
+NUM = re.compile(r'-?\d+(?:\.\d+)?(?:e-?\d+)?')
+def values(c, skip_design=False):
+    """Every number printed by a cell, in order; timings removed; the design table (text only) optionally skipped."""
+    seq, imgs = [], []
     for o in c.get('outputs', []):
         if o['output_type'] == 'stream':
-            text.append(''.join(o['text']))
+            t = ''.join(o['text'])
         elif o['output_type'] in ('display_data', 'execute_result'):
             d = o['data']
             if 'image/png' in d:
                 imgs.append(hashlib.sha1(''.join(d['image/png']).encode()).hexdigest())
-            if 'text/html' in d:
-                text.append(re.sub(r'T_[0-9a-f]{5}', 'T_id', ''.join(d['text/html'])))
-            elif 'text/plain' in d and 'image/png' not in d:
-                text.append(''.join(d['text/plain']))
-        elif o['output_type'] == 'error':
-            text.append('ERROR')
-    return TIMING.sub('<t>', ''.join(text)), imgs
-def drop_explained(t):
-    t = re.sub(r'Problem 3 runtime \(minutes\).*?</tr>', '', t, flags=re.S)
-    t = re.sub(r'(Table 3\.16: rf\|M3\|expanding.*?<td id="T_id_row3_col1" class="data row3 col1" >)1[01](</td>)', r'\1N\2', t, flags=re.S)
-    return t
-p, same, total = [], 0, 0
+            t = html.unescape(re.sub(r'<[^>]+>', ' ', ''.join(d.get('text/html', '')))) if 'text/html' in d else ('' if 'image/png' in d else ''.join(d.get('text/plain', '')))
+            if skip_design and 'fixed before fitting' in t:
+                continue
+            t = re.sub(r'T_[0-9a-f]{5}\S*', ' ', t)
+        else:
+            t = 'ERROR'
+        t = re.sub(r'(\d+(?:\.\d+)?) ?(s|min|seconds)\b', ' ', t)                        # timings
+        t = re.sub(r'Problem 3 runtime \(minutes\)\s+\S+', ' ', t)
+        t = re.sub(r'Python [\d.]+, pandas [\d.]+, numpy [\d.]+, scikit-learn [\d.]+(, statsmodels [\d.]+)?', ' ', t)
+        t = re.sub(r'Table 3\.\d+[a-z]?|Figure 3\.\d+[a-z]?|Sections? 3\.\d+|\b3x\b|L\d+ p\.\d+', ' ', t)   # labels, not values
+        seq += NUM.findall(t)
+    return seq, imgs
+p, same, total, explained = [], 0, 0, []
 for s in range(41):
     if new[s]['cell_type'] != 'code':
         continue
-    (ta, ia), (tb, ib) = outs(old[s]), outs(new[s])
-    ta, tb = drop_explained(RELABEL_OUT(ta)), drop_explained(tb)
-    if ta != tb:
-        d = [l for l in difflib.unified_diff(ta.splitlines(), tb.splitlines(), lineterm='', n=0) if not l.startswith(('---', '+++', '@@'))]
-        p.append(f'cell {s}: {d[:4]}')
+    (va, ia), (vb, ib) = values(old[s], s == 39), values(new[s], s == 39)
+    if va != vb:
+        d = [(k, x, y) for k, (x, y) in enumerate(zip(va, vb)) if x != y]
+        if s == 39 and len(va) == len(vb) and [(x, y) for _, x, y in d] in ([('10', '11')], [('11', '10')], []):
+            explained.append('Table 3.16 dB count (floating-point zero)') if d else None
+        else:
+            p.append(f'cell {s}: {len(va)} vs {len(vb)} printed numbers; first differences {d[:4]}')
     if len(ia) != len(ib):
         p.append(f'cell {s}: {len(ia)} figures in the reference, {len(ib)} here')
     total += len(ib); same += sum(x == y for x, y in zip(ia, ib))
-report(f'outputs: identical to the reference (labels mapped; timings and the Table 3.16 floating-point count excepted); '
+report(f'outputs: every printed number identical to the reference, in order (timings, labels and the design table text excepted); '
        f'{same} of {total} figures byte-identical', p)
+print('  explained:', explained or 'none')
 
 # 4 ---------------------------------------------------------------- numbers in answers and write-up
 def printed(cells):

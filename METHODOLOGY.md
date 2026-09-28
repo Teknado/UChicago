@@ -64,16 +64,16 @@ Every result quoted here is printed by a cell of the notebook, and Problem 3's h
 - **How much to read into the gaps.** The comparison is fold by fold on shared folds: the 3-leaf tree beats the 6-leaf tree in 4 of 5 folds, by 1 to 3 people each. The 90.75% also won a search over six sizes, so it is slightly optimistic as an estimate of future accuracy (L4 p.43; L5 p.57).
 
 **Alternatives set aside.**
-- **A one-standard-error rule, or any "within noise" tolerance.** Rejected because the exam's tie rule is literal, and the 1-SE rule appears only in a figure legend (L5 p.46), not as a taught method.
-- **A paired per-person test for the model differences.** This is McNemar's test, which is not taught. The fold spread, and the count of folds won or lost, are what the course uses (L5 p.46; L8 p.45).
+- **A one-standard-error rule, or any "within noise" tolerance.** Rejected because the exam's tie rule is literal, and a one-standard-error rule is not taught as a method.
+- **A paired per-person test for the model differences.** This is McNemar's test, which is not taught. The fold spread, and the count of folds won or lost, are what the course uses (L8 p.45).
 - **`cv=5` as an integer.** It gives unshuffled folds, which are different folds from the exam's.
 
 ### 1.2 The chosen tree in words
 - The tree is refit on all 400 people at the size cross-validation chose, because CV chooses a size, not a particular tree (L5 p.36, as in L8 p.33). It is L8 p.33's tree, split by split: Age ≤ 42.5, then EstimatedSalary ≤ 90,500.
 - It is stable. The five trees fitted on the CV training folds all split on Age and then Salary, with age thresholds between 42.5 and 44.5.
 - Its honest accuracy is the CV figure, 90.75%, not the 91.5% it scores on the people it was fitted to.
-- **The answer** (two sentences, as the exam asks): people over 42 mostly bought (97 of 115), as did people aged 42 or younger earning more than $90,000 (37 of 44). Younger people earning $90,000 or less almost never bought (9 of 241). Gender plays no part.
-- The thresholds are translated for a lay reader: sklearn thresholds are midpoints, ages are whole years, and salaries are multiples of $1,000, so ≤ 42.5 becomes "42 or younger". Both buyer regions are hedged ("mostly", "almost never") because no region is pure.
+- **The answer** (two sentences, as the exam asks): people over 42 mostly bought (97 of 115), as did people aged 42 or younger earning more than \$90,000 (37 of 44). Younger people earning \$90,000 or less almost never bought (9 of 241). Gender plays no part.
+- The thresholds are translated for a lay reader: sklearn thresholds are midpoints, ages are whole years, and salaries are multiples of \$1,000, so ≤ 42.5 becomes "42 or younger". Both buyer regions are hedged ("mostly", "almost never") because no region is pure.
 
 ### 1.3 Random forest and boosting
 - **Results.** Random forest (300 trees) **88.75%** (355/400) and gradient boosting (100 rounds) **89.00%** (356/400): **neither beats the 3-leaf tree** (363/400). Both are far above the baseline and the unpruned tree.
@@ -83,7 +83,7 @@ Every result quoted here is printed by a cell of the notebook, and Problem 3's h
   - boosting (learning rate 0.1, depth 3) scores 97.44% on its training folds, against 91.63% for the small tree.
 
   On the lecture's much larger housing data, averaging beats one tree (L8 p.54); on 400 people and one rectangle it does not.
-- **What was ruled out as an explanation.** The forest tries one of the three features at each split (its default), but that is not why it falls short: allowing all three features at every split leaves its accuracy unchanged. The explanation therefore rests on the printed training-fold accuracies, not on feature subsampling.
+- **The explanation rests on the printed training-fold accuracies.** The forest's default of trying one of the three features at each split is not offered as a reason for its shortfall; the evidence the notebook prints is that its fully grown trees fit the training folds almost perfectly.
 - **Tuning the ensembles** was not done. The exam fixes 300 trees and 100 rounds with default settings, and the question is whether the defaults beat the tree.
 
 ### 1.4 Two importance rankings
@@ -135,7 +135,7 @@ Every result quoted here is printed by a cell of the notebook, and Problem 3's h
 - **Monte-Carlo uncertainty.** A fraction's SE is the sample SD of the 0/1 indicator over √M, and a mean's CI uses the t distribution (L2 p.63, p.81–86). A result that does not reject is reported as "consistent with", never "equal to" (L2 p.91, p.93).
 
 ### 2.1 The prediction (written before any code)
-The answer is the student's own prediction, written before any Problem 2 code existed and left exactly as written. It predicts:
+The answer is the student's own prediction, written before any Problem 2 code, as the exam's "commit before you compute" requires. It predicts:
 - that the average across desks stays near 1;
 - that by Jensen's inequality the median and a single desk drift down at a rate proportional to −1/(n−1);
 - that the result is a collapse of the reported VaR.
@@ -158,7 +158,7 @@ The answer is the student's own prediction, written before any Problem 2 code ex
 - **The drift.** The exam's design is used: 500 desks × 500 nights for n = 50, 500 and 5,000, with SEs across desks.
   - n × (mean nightly change in log σ̂²) is −0.99, −1.00 and −0.87 (SE 0.20).
   - A precise n = 50 run (2,000 × 2,000), planned in advance, gives −1.025 (SE 0.005). That is 4.9 SE from −1/n but 0.9 SE from −1/(n−1).
-  - **Formula: −1/(n−1), which equals −1/n for any realistic n.**
+  - **Formula: −1/(n−1), which is approximately −1/n for any realistic n.**
   - The n = 500 value is cross-checked on the 2.2 run's increments (−0.002059 per night).
 - **The three numbers:**
   - the expectation of σ̂² on night 2,500 is exactly 1;
@@ -209,7 +209,7 @@ Each item is recomputed and printed in Section 3.1 of the notebook. The rule for
 | issue | evidence (printed) | treatment | why this is legitimate |
 |---|---|---|---|
 | **`x10` is a same-year average** of the monthly short rate, stamped from January | constant within each calendar year; correlation 0.998 with the *same-year* mean of `x86`, against 0.839 with the prior-year mean | **Not used.** The monthly short rate `x86` from the extended file is used instead, at the same 2-month lag as every macro series | A one-month lag of `x10` would leave up to 11 months of look-ahead. The fix is to use the monthly series at its release lag (L5 p.58: merge on the publication date) |
-| **`x11` stops early** for countries 12, 9 and 11 (2020-10, 2021-08, 2024-03) | no interior holes. A stale forward fill would be wrong by up to 10.1 percentage points, because the stops fall at the start of the 2021–23 inflation shock | **Not used.** Rebuilt as `x86 − x12` to measure the redundancy (pooled correlation 0.988, RMSE 0.354; country 12 weakest) | Its gaps, and its near-redundancy with `x86` and `x12`, which are both in the model. Forward-filling was rejected (regime change). A fitted rebuild would itself be a transformation fitted on data |
+| **`x11` stops early** for countries 12, 9 and 11 (2020-10, 2021-08, 2024-03) | no interior holes. Two of the three stops (countries 12 and 9) fall just before or during the 2021–23 inflation shock, where a stale forward fill would be wrong by up to 10.1 percentage points | **Not used.** Rebuilt as `x86 − x12` to measure the redundancy (pooled correlation 0.988, RMSE 0.354; country 12 weakest) | Its gaps, and its near-redundancy with `x86` and `x12`, which are both in the model. Forward-filling was rejected (regime change). A fitted rebuild would itself be a transformation fitted on data |
 | **Back-filled leading values** | 8 (variable, asset) pairs in 7 assets carry copies of their first genuine value; the last is dated 2002-07 | Set to missing; the first target month is 2003-01, so none enters any design matrix (asserted) | A backward fill carries the future into the past (the exam's workflow) |
 | **Duplicates and hidden global series in the extended file** | 6 exact copies of curated series (e.g. `x73` = `x10`); 26 columns identical across all 12 countries, 4 of them copies of the global file | The extended file is never concatenated or screened; only `x86` is taken from it | Exact collinearity (L3 p.40); the exam's own warning to find the duplicates |
 | **Low-frequency columns of unknown timing** | 35 annual (changing only in January) and 26 quarterly columns | Not used | Their release dates are unknown, so any lag would be a guess (L5 p.58) |
@@ -327,12 +327,12 @@ Two implications were stated before modelling:
 - **Signs of no signal.**
   - Ridge chose the no-signal end of its grid in 64% of refits (93% once macro is added).
   - Even the best fixed penalty chosen with hindsight (post hoc) does not beat the class means.
-  - Static fits are worst: static minus expanding is −0.727% for ridge M2 (t = −1.89).
+  - Static fits are worst (paired differences, post hoc): static minus expanding is −0.727% for ridge M2 (t = −1.89).
 - **Flexible models overfit.**
   - OLS on M3 scores −20.4% static and −4.7% expanding.
   - The deep forests score −2.2% and −6.2%, with in-sample R² of 27% and 58%.
-  - Forest minus ridge on characteristics is −0.083% (SE 0.130%, post hoc): no exploitable nonlinearity.
-- **Against each asset's own trailing mean.** Class means score +0.36% (t = 2.18) and ridge M2 +0.32% (t = 1.92). That is shrinkage of noisy asset means toward class means, not characteristic signal.
+  - Forest minus ridge on characteristics is −0.083% (SE 0.130%, post hoc): no detectable nonlinearity.
+- **Against each asset's own trailing mean** (post hoc). Class means score +0.36% (t = 2.18) and ridge M2 +0.32% (t = 1.92). That is shrinkage of noisy asset means toward class means, not characteristic signal.
 
 **Q2: macro adds nothing. NO.**
 - **The primary test.** Ridge M3 minus ridge M2 is **−0.123% (SE 0.085%)**. Macro lowers R²_OOS in every pre-listed paired comparison (Table 3.18); global macro alone costs −0.414%, country macro alone −0.106%.
@@ -364,11 +364,12 @@ Two implications were stated before modelling:
   - P1's weights correlate 0.9994 with those of the same portfolio built on class means alone, which earns the same 0.44.
   - With that class-means portfolio as a regressor, α's t falls to 0.82.
   - P3, the pure characteristic bet, earns a gross Sharpe of 0.08 and −0.11 net, at 34% monthly turnover.
-  - The gain depends on re-estimating the class means every year. The same model frozen at 2010 earns 0.27, below RP (α −0.16%, t = −0.91).
+  - The gain depends on re-estimating the class means every year (post hoc): the same model frozen at 2010 earns 0.27, below RP (α −0.16%, t = −0.91).
 - **Fragility.**
   - α is −0.16% (t = −0.37) in 2011–17 and +1.36% (t = 2.47) in 2018–24 (post hoc), and EW beats P1 in 2018–24.
+  - The same model on rolling windows (not selected; post hoc) earns a net Sharpe of 0.60 at 8.2% monthly turnover, so the portfolio result depends on the scheme.
   - Six months have studentized residuals beyond ±2.5. Without them t rises to 2.20: reported, not used, because L3 p.17 allows deleting a point only for a good reason.
-- **Concentration.** 60% of P1's gross exposure is in class D (37% for RP). asset_16, the least volatile asset, averages 22% and reaches 42%. A class-risk-budget variant (our choice: inverse-volatility weights within each class, each class scaled to equal trailing risk) is shown as a remedy.
+- **Concentration.** 60% of P1's gross exposure is in class D (37% for RP). asset_16, the least volatile asset, averages 22% and reaches 42%. A class-risk-budget variant is shown as a diagnostic (our choice: each class sleeve at unit gross, scaled by the inverse trailing volatility of that class's RP sleeve). It cuts class D to 46% and the net Sharpe ratio to 0.41.
 - **Break-even costs.** 260 bp against EW and 363 bp against RP, so costs are not what decides Q3.
 - **Set aside:** mean–variance or minimum-variance weights. They are not taught, and a 50 × 50 covariance matrix from 36–96 months is rank-deficient or badly conditioned (L1 p.63). Correlation is handled through the class risk budget instead.
 
@@ -384,7 +385,20 @@ The five questions of L5 p.58 and the traps of AI Coding Guide §4 are each answ
 | benchmark switched after seeing results? | No. The pooled trailing mean was fixed in Section 3.0; every other benchmark is reported beside it |
 | too good to be true? | An alarm fires on any R²_OOS above 2% (L5 p.57). It is not triggered |
 
-### 3.9 Methods considered and not used
+### 3.9 Deviations from the design, and post-hoc analyses
+The notebook's Section 3.10 lists these in full; in summary:
+- **Deviations from the design** (none changes a verdict):
+  - the leak alarm is applied to the largest R²_OOS, since the design means a suspiciously high value (not triggered);
+  - in the curated-`x10` variant, the 50 rows of 2003-01 get the neutral value 0, because a 14-month lag leaves that month without a trailing z-score;
+  - "in-sample fit exceeds out-of-sample fit" is reported as a count (38 of 38), not asserted;
+  - the design text says "one-way turnover"; the cost is charged on Σ|Δw|, twice one-way turnover under the usual convention, so it is conservative.
+- **Post-hoc analyses** (added after the out-of-sample results were seen; each is labelled post hoc in the notebook; they re-use the test window and none changes a verdict):
+  - descriptive: the tercile averages (Table 3.6b), the macro inputs described (Table 3.5b), the spread of the target by class and year (Tables 3.6c–d), the forecast deciles (Table 3.17b);
+  - inference: the detectable effect of the Q1 statistic, the per-asset benchmark summary (Table 3.10c), paired scheme differences (Table 3.12b), serial dependence and the moving-block bootstrap (Tables 3.12c–d), forest minus ridge (Table 3.12e), R²_OOS at every fixed penalty (Table 3.14c), PCR's loadings (Table 3.14d), PCR with K = 0 allowed;
+  - macro: the cross-country share of country-macro variance (Table 3.18b), where the placebo wraps (Table 3.19b), and characteristic × macro interactions (Table 3.19c; the 39th specification);
+  - portfolios: P1 on the static and rolling forecasts (Tables 3.24–3.26, 3.29), the α regression by sub-period (Table 3.27b), the class tilt year by year (Table 3.28b), and the α diagnostics and bootstrap SE (Tables 3.27c–e).
+
+### 3.10 Methods considered and not used
 
 | method | why not |
 |---|---|
@@ -401,9 +415,9 @@ The five questions of L5 p.58 and the traps of AI Coding Guide §4 are each answ
 | **`x10` at a 1-month lag; `x11`; forward-filled `x11`** | Look-ahead; gaps and a stale fill through a regime change (§3.1) |
 | **Shuffled K-fold, `*CV` estimators, a random hold-out** | Fatal on time-ordered data (AI Coding Guide §4a) |
 
-### 3.10 Limitations
+### 3.11 Limitations
 - The data are anonymised, so the class and characteristic identities are inferences.
-- The test period is 168 months. Only an R²_OOS of about 0.5% could have been detected, so the answer to Q1 is "not detectable" rather than "absent".
+- The test period is 168 months. Only an R²_OOS of about 0.5–0.7% could have been reliably detected, so the answer to Q1 is "not detectable" rather than "absent".
 - The month bootstrap treats months as independent (the block bootstrap shows the SEs are somewhat too small, which only strengthens the "no" verdicts).
 - The post-hoc diagnostics re-use the test window that the design meant to score once; none changes a verdict.
 - Credit, valuation and external-balance macro series (in the extended file) were not tested.
@@ -434,4 +448,4 @@ The five questions of L5 p.58 and the traps of AI Coding Guide §4 are each answ
 
 - **41 cells in the exam's order.** Every exam question is followed by its code cell and its answer cell (2.1 has no code cell, because it is answered before any code; 1.5's code cell only records that no code is needed). Problem 3's analysis is one code cell, printing a banner where each section (3.0–3.9) starts. The write-up is the final cell, followed by the notes of Sections 3.0–3.10 as appendices; table and figure numbers (Table 3.x, Figure 3.x) are shared between the code output and the write-up.
 - **Running it.** On the class server as it stands, or with the data files next to the notebook. It runs top to bottom with no errors, in about 14 minutes on four cores (Problem 3 in about 12).
-- **Environment.** Python 3.11, pandas 3.0.6, numpy 2.4.6, scikit-learn 1.9.1, statsmodels 0.15.0 (the class server has Python 3.14, pandas 3.0.5 and scikit-learn 1.9.0; no code depends on the difference).
+- **Environment.** Python 3.11, pandas 3.0.6, numpy 2.4.6, scikit-learn 1.9.1, statsmodels 0.15.0 (the class server has Python 3.14, pandas 3.0.5 and scikit-learn 1.9.0; no known dependence on the difference).
