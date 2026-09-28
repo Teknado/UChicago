@@ -1,0 +1,41 @@
+       3.1 | , and 60 months) yield identically negative performance ($-2.7\%$ to $-3.1\%$), confirming that mac
+       6.6 |  from under 1% to above 17% across assets (annualized volatility from 6.6% in sovereign debt to 31
+      31.0 | % across assets (annualized volatility from 6.6% in sovereign debt to 31.0% in commodities), correl
+       2.1 |  cross-sectional tilts.  ---  ## 2. Data and Feature Engineering  ### 2.1 Panel Universe and Descr
+     0.194 | eturn volatility (.97\%$), mean excess return $+6.02\%$, Sharpe ratio 0.194, with extreme tail event
+     54.65 | $+6.02\%$, Sharpe ratio 0.194, with extreme tail events (worst month $-54.65\%$ during the March 2020
+     91.52 |  (worst month $-54.65\%$ during the March 2020 lockdowns; best month $+91.52\%$). Commodities have no
+     16.29 | t annualized excess return ($-0.24\%$, Sharpe $-0.023$), worst month $-16.29\%$. Crucially, country_7
+     25.36 | ity (.95\%$), mean return $+4.77\%$, Sharpe ratio 0.282, worst month $-25.36\%$ (Nikkei 225 during th
+       225 |  return $+4.77\%$, Sharpe ratio 0.282, worst month $-25.36\%$ (Nikkei 225 during the October 2008 
+     0.405 |  steady annualized return $+2.68\%$, highest standalone Sharpe ratio (0.405), worst month $-12.08\%$
+     12.08 | turn $+2.68\%$, highest standalone Sharpe ratio (0.405), worst month $-12.08\%$ (UK Gilt during the S
+    0.9934 | 12-Month Momentum):** Displays high persistence (AR(1) = 0.916) and a 0.9934 correlation with trailin
+      0.93 |  5-Year Reversal):** Contemporaneous; shifted by 1 month. Displays a $-0.93$ to $-0.98$ correlation 
+      0.98 | ersal):** Contemporaneous; shifted by 1 month. Displays a $-0.93$ to $-0.98$ correlation with traili
+       2.4 | une to look-ahead, bounded, and robust to extreme tail outliers.  ### 2.4 Macroeconomic Variables,
+      2.06 |  * **Global Macro Conditioning:** We take $\log(x_6)$ (VIX, skewness $+2.06$), $ (financial stress),
+      69.4 | {	ext{country\_7},t}$. Because static country means account for up to 69.4% of raw differential var
+      4800 | follows: * **Initial Training Block:** 2003-01 to 2010-12 (96 months, 4,800 asset-months), capturing
+       3.2 | ing window refitted annually each December (14 distinct refits).  ### 3.2 Model Specifications & U
+       150 | -linear tree ensemble (100 trees, max_features=0.33, min_samples_leaf=150) fitted on characteristi
+     2.715 | gradation** | | **Placebo (36m Shift)** | Chars + 36m Shifted Macro | -2.715% | -3.045% | Non-station
+     3.045 | * | | **Placebo (36m Shift)** | Chars + 36m Shifted Macro | -2.715% | -3.045% | Non-stationary macro 
+     3.084 | macro noise | | **Placebo (48m Shift)** | Chars + 48m Shifted Macro | -3.084% | -3.415% | Non-station
+     3.415 | e | | **Placebo (48m Shift)** | Chars + 48m Shifted Macro | -3.084% | -3.415% | Non-stationary macro 
+     2.890 | macro noise | | **Placebo (60m Shift)** | Chars + 60m Shifted Macro | -2.890% | -3.220% | Non-station
+     3.220 | e | | **Placebo (60m Shift)** | Chars + 60m Shifted Macro | -2.890% | -3.220% | Non-stationary macro 
+      2.71 | hin the exact same negative band as the circularly shifted placebos ($-2.71\%$ to $-3.08\%$). Becaus
+      3.08 |  same negative band as the circularly shifted placebos ($-2.71\%$ to $-3.08\%$). Because circularly 
+       4.2 | lane, whereas linear shrinkage regularizes variance effectively.  ### 4.2 Predictability Breakdown
+       5.1 | ds.  ---  ## 5. From Forecasts to Portfolios & Transaction Costs  ### 5.1 Trading Strategy Archite
+       5.2 | led return: {i,t} \propto \hat{y}_{i,t} / \hat{\sigma}_{i,t-1}$.  ### 5.2 Out-of-Sample Performanc
+    0.0033 | :---: | :---: | :--- | | **Intercept ($lpha$, Ann.)** | **+0.52%** | 0.0033 | **+1.56** | 0.121 | Po
+     0.121 | | | **Intercept ($lpha$, Ann.)** | **+0.52%** | 0.0033 | **+1.56** | 0.121 | Positive net timing al
+    0.0512 |  timing alpha | | **Risk Parity ($eta_{	ext{RP}}$)** | **+1.1846** | 0.0512 | **+23.13** | 0.000 | C
+    0.0303 | d foundation | | **Equal Weight ($eta_{	ext{EW}}$)** | **-0.3134** | 0.0303 | **-10.36** | 0.000 | U
+    0.0249 | odity drag | | **TS-Momentum ($eta_{	ext{TSMOM}}$)** | **+0.0861** | 0.0249 | **+3.46** | 0.001 | St
+     508.2 | cally significant trend tilt |  *Model Diagnostics:* ^2 = 0.9028$,  = 508.2$.  ---  ## 6. Interpreta
+       6.1 |  = 0.9028$,  = 508.2$.  ---  ## 6. Interpretation and Discussion  ### 6.1 Why Macro Conditioning F
+     0.295 | h asset returns (e.g., VIX spikes co-move with equity drops at $ho = -0.295$). However, because fina
+       6.2 | coefficients fails to generalize across shifting policy regimes.  ### 6.2 The Power of Volatility-

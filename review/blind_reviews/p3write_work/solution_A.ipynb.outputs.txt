@@ -1,0 +1,281 @@
+400 people, 35.8% of them purchased
+
+Hurdle Accuracy ('Nobody purchases'): 0.6425 (64.25%)
+Unpruned Tree 5-Fold CV Accuracy:     0.8500 (85.00%)
+
+
+--- max_leaf_nodes Sweep Results ---
+ max_leaf_nodes 5-Fold CV Accuracy
+              2             0.8350
+              3             0.9075
+              4             0.9075
+              6             0.8950
+              8             0.8825
+             12             0.8750
+
+ 
+Random Forest (300 trees) 5-Fold CV Accuracy:     0.8875 (88.75%)
+Gradient Boosting (100 rounds) 5-Fold CV Accuracy: 0.8900 (89.00%)
+Optimal Pruned Tree (3 leaves) 5-Fold CV Accuracy: 0.9075 (90.75%)
+
+--- Feature Importance Comparison ---
+        Feature MDI (In-Sample) Permutation (Held-out Mean) Permutation Std
+            Age          0.4699                      0.2433          0.0437
+EstimatedSalary          0.5191                      0.1817          0.0291
+         Gender          0.0111                      0.0192          0.0140
+
+AI Coding Guide Rule 4(a) Enforced: Never shuffle time-series return data.
+Ordered walk-forward evaluation (expanding/rolling windows) is mandatory.
+
+Student ID Seed: 2694
+Correct VaR, every night, in units of sigma: 2.326
+
+ 
+One Desk Night 2500 sigma2: 0.096634
+One Desk Night 2500 Reported VaR: 0.7232 (True VaR: 2.326)
+
+
+--- 1,000 Desks Distribution on Night 2,500 ---
+Mean sigma2:       0.7811
+Median sigma2:     0.007512 (Theory e^-5: 0.006738)
+5th Percentile:    0.000018
+95th Percentile:   1.2844
+Maximum sigma2:    159.2464
+Fraction reporting VaR < 0.1 * truth: 0.5410 (54.10%)
+One desk percentile position:         79.30%
+
+Verification E[sigma2_{t+1} | sigma2_t=1]: 1.000002 (Exact theory: 1.000000)
+
+--- Nightly Change in log(sigma2) across n ---
+n =   50 | Measured E[delta log sigma2]: -0.018645 | Formula -1/(n-1): -0.020408 | Formula -1/n: -0.020000
+n =  500 | Measured E[delta log sigma2]: -0.003788 | Formula -1/(n-1): -0.002004 | Formula -1/n: -0.002000
+
+n = 5000 | Measured E[delta log sigma2]: -0.000233 | Formula -1/(n-1): -0.000200 | Formula -1/n: -0.000200
+
+Share of total sum held by 10 largest desks: 0.6804 (68.04%)
+
+ 
+--- Experiment (a): Half Real, Half Synthetic Library (Night 2500) ---
+Median sigma2:   0.999175
+5th Percentile:  0.893898
+95th Percentile: 1.120918
+Mean sigma2:     1.003400
+
+--- Experiment (b): Real Market Data (dj30.csv, 2016-2021) ---
+Sample size:               1511 trading days
+Sample Volatility (sigma): 0.011951 (1.20% daily)
+Excess Kurtosis (real):    24.0747
+Excess Kurtosis (synth):   0.3982
+Empirical 1% VaR:          0.033250 (3.33%)
+Reported Normal 1% VaR:    0.027803 (2.78%)
+
+Panel shape: (15000, 10)
+Date range: 2000-01-31 to 2024-12-31
+
+        date asset_id asset_class    country  excess_return        x1  \
+0 2000-01-31  asset_1           A  country_7       0.035385  0.044852   
+1 2000-02-29  asset_1           A  country_7       0.116676  0.073761   
+2 2000-03-31  asset_1           A  country_7       0.040920  0.089627   
+3 2000-04-30  asset_1           A  country_7      -0.008399  0.074356   
+4 2000-05-31  asset_1           A  country_7      -0.086259  0.067134   
+
+         x2        x3        x4        x5  
+0  0.970233 -0.109145  0.158469  0.086743  
+1  0.974766 -0.109145  0.133949  0.085443  
+2  0.922260 -0.109145  0.188675  0.086244  
+3  1.055247 -0.109145  0.206628  0.085047  
+4  0.788085 -0.109145  0.227556  0.083820  
+ 
+ 
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+ 
+ 
+   
+     
+        
+       date 
+       asset_id 
+       asset_class 
+       country 
+       excess_return 
+       x1 
+       x2 
+       x3 
+       x4 
+       x5 
+     
+   
+   
+     
+       0 
+       2000-01-31 
+       asset_1 
+       A 
+       country_7 
+       0.035385 
+       0.044852 
+       0.970233 
+       -0.109145 
+       0.158469 
+       0.086743 
+     
+     
+       1 
+       2000-02-29 
+       asset_1 
+       A 
+       country_7 
+       0.116676 
+       0.073761 
+       0.974766 
+       -0.109145 
+       0.133949 
+       0.085443 
+     
+     
+       2 
+       2000-03-31 
+       asset_1 
+       A 
+       country_7 
+       0.040920 
+       0.089627 
+       0.922260 
+       -0.109145 
+       0.188675 
+       0.086244 
+     
+     
+       3 
+       2000-04-30 
+       asset_1 
+       A 
+       country_7 
+       -0.008399 
+       0.074356 
+       1.055247 
+       -0.109145 
+       0.206628 
+       0.085047 
+     
+     
+       4 
+       2000-05-31 
+       asset_1 
+       A 
+       country_7 
+       -0.086259 
+       0.067134 
+       0.788085 
+       -0.109145 
+       0.227556 
+       0.083820 
+     
+   
+ 
+ 
+================================================================================
+STEP 1: EXPLORATORY DATA ANALYSIS & DATA TRAP AUDIT
+================================================================================
+
+[Table 1] Summary Statistics by Asset Class (2000-2024):
+Asset Class  N Assets Ann Mean Ret Ann Volatility Sharpe Ratio Worst Month Best Month
+          A        26        6.02%         14.61%        0.412     -19.85%     13.90%
+          B         8       -0.24%          7.95%       -0.030      -8.52%      6.74%
+          C         9        4.77%         14.61%        0.327     -16.02%     15.04%
+          D         7        2.68%          5.28%        0.508      -5.03%      5.04%
+
+[Table 2] Pairwise Correlation Matrix Across and Within Asset Classes:
+          A         B         C         D
+A  0.211317  0.240182  0.176471 -0.080127
+B  0.240182   0.55004  0.229877  0.052825
+C  0.176471  0.229877  0.725444 -0.103964
+D -0.080127  0.052825 -0.103964  0.579882
+
+ 
+
+[Table 3] Characteristic Scale, Persistence, and Predictive Sorts (Training Block 2003-2010):
+
+Feature    Mean    Std  AR(1) Ann Tercile Spread (H-L)
+     x1  0.2526 0.8465 0.6214                   +3.61%
+     x2  0.0498 0.2797 0.9157                   +3.71%
+     x3 -0.2511 0.7471 0.9685                   -3.93%
+     x4  0.0040 0.7777 0.6822                   +7.12%
+     x5  0.0591 0.0362 0.9875                   -2.27%
+
+--- EXECUTABLE DATA TRAP AUDIT REPORT ---
+Trap T1 Audit: x10 is constant for all 12 months in 300/300 country-years: True (corr with full-year short rate = 0.9981). Look-ahead detected -> Dropped; replaced by x86.
+Trap T2 Audit: x11 has 99 missing values at end of sample (Sweden, Japan, Switzerland). Rebuild as (x86 - x12) achieves corr = 0.9882 -> Dropped (collinear with included x86 and x12).
+Trap T3 Audit: Assets 1, 2, 5, 21, 26, 3 have flat leading runs in 2000-2002. All terminate by August 2002 -> Bypassed by starting evaluation at 2003-01.
+Trap T7 Audit: asset_16 x5 floored at 0.004 for 43 consecutive months during BoJ YCC -> Bypassed by computing sigma from raw returns.
+Extended File Audit (x17-x164): 34 annual-stamped + 26 quarterly-stamped series (60 look-ahead landmines).
+PCA on 148 extended variables: Top 2 components explain 86.4%, top 5 explain 97.0% of total variance -> Confirms 97% redundancy and multiple-testing risk. Dropped in favor of parsimonious curated macro.
+
+================================================================================
+STEP 2: FEATURE ENGINEERING & DATA PREPARATION
+================================================================================
+
+Master feature panel prepared: 13200 rows across 264 months (2003-2024).
+[Table 4] Predictor Count Summary:
+  Model M1: 3 unpenalized class intercepts
+  Model M2: M1 + 5 within-class characteristic ranks
+  Model M3: M2 + 16 global macro interactions + 18 country macro interactions = 39 predictors total
+
+================================================================================
+STEP 3: EXPANDING-WINDOW ESTIMATION & OUT-OF-SAMPLE PREDICTABILITY
+================================================================================
+Evaluation Harness: Initial Training 2003-2010 (96m) | OOS 2011-2024 (168m, 8,400 asset-months).
+Refit frequency: Annual each December (14 refits).
+
+
+[Table 5] Out-of-Sample Predictability R2_OOS (%) Across Models (2011-2024):
+       Model Specification R2_OOS vs Pooled Mean R2_OOS vs Zero
+        M1 Class Means OLS               +0.087%        -0.234%
+M2 Ridge (Characteristics)               -0.001%        -0.322%
+          M2 Random Forest               -0.115%        -0.437%
+         M3 Ridge (+Macro)               -2.972%        -3.303%
+         Placebo 36m Shift               -2.972%        -3.303%
+         Placebo 48m Shift               -2.972%        -3.303%
+         Placebo 60m Shift               -2.972%        -3.303%
+
+[Table 6] Out-of-Sample Predictability by Asset Class (M2 Ridge vs Class Mean Benchmark):
+Asset Class R2_OOS vs Class Mean R2_OOS vs Zero
+          A              -0.166%        -0.779%
+          B              -0.346%        -1.464%
+          C              +0.054%        +2.026%
+          D              -0.306%        -0.307%
+
+================================================================================
+STEP 4: PORTFOLIO BACKTEST & NET PERFORMANCE
+================================================================================
+
+
+[Table 7] Out-of-Sample Portfolio Performance (2011-2024, 10 bps Transaction Costs):
+             Strategy Gross Ann Ret Volatility Gross Sharpe Net Ann Ret Net Sharpe Turnover Max Drawdown
+         Equal Weight         2.51%      8.92%        0.282       2.51%      0.281    0.000      -24.15%
+          Risk Parity         1.64%      5.34%        0.308       1.61%      0.302    0.022      -11.46%
+ Time-Series Momentum         0.80%      4.04%        0.199       0.50%      0.123    0.251      -13.88%
+P1 Forecast Portfolio         1.80%      3.97%        0.454       1.69%      0.426    0.089       -9.70%
+
+[Table 8] Performance Attribution Regression (P1 Net Return vs Benchmarks):
+R-squared: 0.9028
+Annualized Alpha: +0.52% (t-stat = 1.56)
+Beta to Risk Parity: +1.1846 (t-stat = 23.13)
+Beta to Equal Weight: -0.3134 (t-stat = -10.36)
+Beta to TS-Momentum: +0.0861 (t-stat = 3.46)
+
+ 
+
+================================================================================
+ALL EMPIRICAL CODE EXECUTED SUCCESSFULLY - ALL TABLES AND FIGURES PRODUCED
+================================================================================
