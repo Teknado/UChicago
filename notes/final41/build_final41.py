@@ -35,6 +35,10 @@ EDITS.append((9, "**How much to read into the gaps.** One person is 1.25 percent
 NOTE_12 = src(13)[src(13).index('\n\n*Technical note (outside the two sentences).*'):]
 EDITS.append((13, NOTE_12, "\n"))
 
+# 1.2: an unescaped pair of "$90,000" makes Jupyter render the text between them as LaTeX; escape the dollar signs.
+EDITS.append((13, "earning more than $90,000 (37 of 44", "earning more than \\$90,000 (37 of 44"))
+EDITS.append((13, "people earning $90,000 or less", "people earning \\$90,000 or less"))
+
 # 1.3: the "why" must be two or three sentences, and its second reason was wrong (one feature per split does not
 # explain the shortfall: allowing all three features gives the same accuracy). Use the printed training-fold accuracy.
 WHY_13_OLD = src(17)[src(17).index('**Why:**'):]
@@ -145,13 +149,13 @@ EDITS.append((105, "\n\nNothing else changed:",
     "\n9. **This 41-cell version (2026-09-28), after a comparison review.** No code statement, number or result changed. "
     "The code cells of each question were merged into the exam template's single code cell for that question; Problem 3's "
     "code sits in the template's project cell, with a printed banner at the start of each section, and these notes follow "
-    "the write-up as appendices. Wording was corrected in six places: the second reason given in 1.3 (that the forest tries "
+    "the write-up as appendices. Wording was corrected in seven places: the second reason given in 1.3 (that the forest tries "
     "one feature per split) was replaced, because allowing all three features at every split leaves the forest's accuracy "
     "unchanged, so the answer now cites the printed training-fold accuracy instead; answers 1.2, 1.3, 2.3 and 2.4 were cut "
     "to the exam's sentence and paragraph limits (the technical note of 1.2 moved into its code cell as comments); two "
     "derived numbers that no cell printed were removed from 1.1; the paper's title no longer says \"pre-registered\" and its "
     "methods section says what the term means; the KNN and neural-network exclusion is described as our choice of scope; "
-    "and \"every paired comparison\" now reads \"every pre-listed paired comparison\". `FINAL_METHODOLOGY.md` lists every "
+    "\"every paired comparison\" now reads \"every pre-listed paired comparison\"; and two dollar signs in 1.2 are escaped so that the answer renders as text. `FINAL_METHODOLOGY.md` lists every "
     "change.\n\nNothing else changed:"))
 
 text = {i: src(i) for i in range(len(C))}
@@ -233,12 +237,12 @@ for slot in range(41):
             assert len(spec) == 1
             new.append(md_cell(text[spec[0]]))
         else:
-            body = '\n\n'.join(text[i].rstrip('\n') for i in spec)
+            body = text[spec[0]] if len(spec) == 1 else '\n\n'.join(text[i].rstrip('\n') for i in spec)   # single cells verbatim
             if slot == 9:                                   # the 1.2 technical note, kept as comments next to the tree code
                 note = NOTE_12.replace('*Technical note (outside the two sentences).*', 'Notes on the tree above (moved here '
                        'from the 1.2 answer, which the exam limits to two sentences):').strip('\n')
                 body += '\n\n' + '\n'.join('# ' + l if l.strip() else '#' for l in note.splitlines())
-            new.append(code_cell(body + '\n'))
+            new.append(code_cell(body if len(spec) == 1 else body + '\n'))
 
 out = copy.deepcopy(nb)
 out['cells'] = new
