@@ -14,7 +14,7 @@ Every replacement must match exactly the stated number of times.
 import json, re, sys, copy
 
 SRC = 'Final_Autumn_2026_final.ipynb'
-DST = sys.argv[1] if len(sys.argv) > 1 else 'Final_Autumn_2026_submission.ipynb'
+DST = sys.argv[1]            # e.g. a scratch path; on financial_analytics_final it is Final_Autumn_2026-1.ipynb
 nb = json.load(open(SRC))
 C = nb['cells']
 assert len(C) == 41
