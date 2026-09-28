@@ -1,0 +1,46 @@
+Gemini pipeline re-executed. OOS rows: 8400
+
+=== C1: placebo inputs vs real inputs (M3 uses char ranks + inter_glob + inter_coun) ===
+shift 36m: rows aligned with eval_df: True | max |change| in the shifted global columns: 6.015 | max |change| in the 39 M3 inputs actually used: 0
+shift 48m: rows aligned with eval_df: True | max |change| in the shifted global columns: 6.609 | max |change| in the 39 M3 inputs actually used: 0
+shift 60m: rows aligned with eval_df: True | max |change| in the shifted global columns: 5.735 | max |change| in the 39 M3 inputs actually used: 0
+predictions identical to real-macro M3: {36: True, 48: True, 60: True}
+
+=== C2: corrected placebo (rebuild the interactions from shifted global AND country macro) ===
+real macro M3 (re-implemented): R2_OOS vs pooled mean = -2.972% (notebook: -2.972%)
+M2 (re-implemented): -0.001%  ->  macro gain M3 - M2 = -2.971 pp
+ shift (months)  R2_OOS vs pooled mean (%)  gain over M2 (pp)
+             36                     -1.640             -1.639
+             48                     -1.751             -1.749
+             60                     -2.021             -2.020
+             72                     -3.547             -3.545
+             84                     -0.818             -0.816
+             96                     -2.435             -2.434
+            108                     -3.273             -3.272
+            120                     -2.020             -2.019
+rank of real macro among real + 8 placebos (1 = best): 7 of 9
+
+=== C3: P1 built from class means only (pred_m1) vs Gemini P1 (pred_m2_ridge), same costs ===
+P1 (ridge M2) net Sharpe 0.426 | P1 on class means only (M1) net Sharpe 0.441
+average monthly correlation of P1 weights with class-means weights: 0.9839
+P1 share of gross exposure in class D: 59%; asset_16 average |w| 24%, max 42%
+P1 regressed on EW, RP, TSMOM and the class-means tilt: beta(M1tilt) 0.854, R2 0.9883, alpha +0.00%/yr (t = 0.01)
+
+=== C4: month-bootstrap SEs (B = 5,000, forecasts held fixed) ===
+M2 ridge vs pooled mean         : R2_OOS -0.001% (SE 0.248%)
+M1 class means vs pooled mean   : R2_OOS +0.087% (SE 0.236%)
+M3 ridge vs pooled mean         : R2_OOS -2.972% (SE 1.703%)
+M2 ridge vs M1 class means      : R2_OOS -0.089% (SE 0.070%)
+RF vs pooled mean               : R2_OOS -0.115% (SE 0.114%)
+net Sharpe P1 - RP: +0.124 (bootstrap SE 0.114)
+net Sharpe P1 - EW: +0.145 (bootstrap SE 0.188)
+net Sharpe P1 - M1: -0.015 (bootstrap SE 0.032)
+
+=== C5: RF inputs ===
+RF features: ['r_x1', 'r_x2', 'r_x3', 'r_x4', 'r_x5'] -> no class dummies; ridge M2 gets class means via demeaning
+RF as in the notebook: -0.115% | RF with class dummies: -0.082% | ridge M2: -0.001% | M1: +0.087%
+
+=== C6: other assertions ===
+NaN share in log(x14), log(x15) before fillna: {'log_x14': 0.0, 'log_x15': 0.0} | min x14, x15: 16.592833 0.003715
+coefficient paths collected but never printed/plotted: {'r_x1': [0.051, 0.052, 0.049, 0.052, 0.04, 0.031, 0.025, 0.025, 0.021, 0.022, 0.017, 0.016, 0.019, 0.024], 'r_x2': [0.014, 0.003, -0.002, 0.027, 0.037, 0.018, 0.012, 0.001, -0.008, -0.015, -0.01, -0.013, -0.002, -0.009], 'r_x3': [-0.001, 0.001, 0.005, 0.024, 0.039, 0.035, 0.043, 0.031, 0.033, 0.031, 0.029, 0.03, 0.038, 0.04], 'r_x4': [0.081, 0.075, 0.065, 0.041, 0.044, 0.044, 0.034, 0.022, 0.018, 0.006, 0.001, 0.007, -0.002, 0.001], 'r_x5': [-0.115, -0.113, -0.11, -0.105, -0.094, -0.094, -0.099, -0.107, -0.096, -0.095, -0.1, -0.1, -0.082, -0.082]}
+leading repeated runs (asset, var, length, last date): [('asset_1', 'x3', 31, '2002-07-31'), ('asset_2', 'x3', 31, '2002-07-31'), ('asset_21', 'x3', 32, '2002-08-31'), ('asset_22', 'x2', 2, '2000-02-29'), ('asset_26', 'x3', 31, '2002-07-31'), ('asset_3', 'x2', 10, '2000-10-31'), ('asset_3', 'x5', 16, '2001-04-30'), ('asset_5', 'x3', 31, '2002-07-31')]

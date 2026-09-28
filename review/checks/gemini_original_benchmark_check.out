@@ -1,0 +1,7 @@
+Original Gemini ridge (chars only), OOS 2010-2024:
+  vs per-asset trailing mean (its benchmark): +0.369%
+  vs pooled trailing mean:                    -0.085%
+  vs zero:                                    -0.035%
+  per-asset mean vs pooled mean:              -0.456%
+x10 enters the original macro models with a 1-month lag: True
+rows from 2000-2002 (back-fill period) in the first training window: 1750
