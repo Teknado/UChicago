@@ -86,6 +86,70 @@ Every departure from the design of Section 3.0 is listed here, with its effect. 
 """
 txt[W] = txt[W][:i0] + DEVIATIONS
 
+# ---------------------------------------------------------------- precision: post-hoc labels, wording, rendering
+# Captions of analyses added after the out-of-sample results were seen carry "(post hoc)", as Section 3.10 says.
+for cap in ["Table 3.6b: average next-month y in each within-class tercile, 2003-2010 (mean over classes and months)",
+            "Table 3.10c: against the per-asset trailing mean of y (2011-2024)",
+            "Table 3.12b: scheme differences, paired month bootstrap (vs the pooled trailing mean)",
+            "Table 3.17b: the numbers behind Figure 3.6b (mean forecast and mean realised y by forecast decile)",
+            "Table 3.18b: share of the variance of each country-macro input that lies across countries within a month",
+            "Table 3.19b: where the circular shift puts end-of-sample macro values",
+            "Table 3.28b: the class tilt year by year (class means re-estimated every December)"]:
+    sub(P, cap + "'", cap + " (post hoc)'")
+sub(P, "'Table 3.24: portfolios, 2011-2024 (168 months)'", "'Table 3.24: portfolios, 2011-2024 (168 months; the P1 static and rolling rows are post hoc)'")
+sub(P, "f'Table 3.25: net Sharpe ratio ({HEADLINE_BP} bp) by sub-period'", "f'Table 3.25: net Sharpe ratio ({HEADLINE_BP} bp) by sub-period (the P1 static and rolling rows are post hoc)'")
+sub(P, "'Table 3.26: net Sharpe ratio against the cost per unit of turnover (sum of |change in w|)'",
+       "'Table 3.26: net Sharpe ratio against the cost per unit of turnover (sum of |change in w|; the P1 static and rolling rows are post hoc)'")
+sub(P, "minus its frozen version, net of 10 bp'", "minus its frozen version, net of 10 bp (the frozen-version row is post hoc)'")
+sub(P, "or leverage above 3 times its mean'", "or leverage above 3 times its mean (the 3x cut-off is our choice)'")
+sub(P, "f'Table 3.10: {bn}, core specifications, 2011-2024 (8,400 asset-months)'", "f'Table 3.10 (panel: {bn}): core specifications, 2011-2024 (8,400 asset-months)'")
+# The design table printed in full (pandas would cut each rule at 50 characters), and the statsmodels version too.
+sub(P, "display(design.to_frame())\nimport sys, sklearn\n", "with pd.option_context('display.max_colwidth', None):\n    display(design.to_frame())\nimport sys, sklearn, statsmodels\n")
+sub(P, ", scikit-learn {sklearn.__version__}')", ", scikit-learn {sklearn.__version__}, statsmodels {statsmodels.__version__}')")
+# Table 3.31: the rows that come from post-hoc analyses are labelled as such.
+for lab in ["Q1: true R2_OOS needed to pass the rule at 50% / 80% power", "ridge M2: static minus expanding, paired (SE, t)",
+            "paired t, static minus expanding: OLS M2 / RF M2 / PCR M3", "vs the per-asset trailing mean of y: ridge M2 / class means M1 (SE, t)",
+            "specifications with R2_OOS > 0 vs the per-asset mean; the per-asset mean vs the pooled mean",
+            "country macro: share of variance across countries within a month (classes B-D), min / max",
+            "placebo: OOS target months with wrapped macro, s = 72 / 120", "PCR M3 with K = 0 allowed: R2_OOS; refits choosing K = 0",
+            "Q3: net Sharpe P1 minus P1 static (bootstrap SE)", "Q3: P1 static: alpha and t on EW + RP + TSMOM",
+            "Q3: net Sharpe of P1 static (2010 tilt frozen) / P1 rolling (not selected)", "Q3: P1 rolling turnover / month",
+            "Q3: alpha of P1 (t), 2011-2017 / 2018-2024", "Q3: class-D share of P1 by year: first / highest (year) / last",
+            "Q3: class-means forecast of y for class B, 2011 / 2024", "Q3: class-means forecast of y for class D, 2011 / highest (year) / 2024"]:
+    sub(P, "'" + lab + "'", "'post hoc: " + lab + "'")
+
+# Answer 2.3: the reconciliation with the 2.1 prediction is its own short paragraph, and the formula is approximate.
+sub(29, "which equals $-1/n$ for any realistic n.**", "which is approximately $-1/n$ for any realistic n.**")
+sub(29, " Against my 2.1 prediction, the Jensen argument", "\n\n**Against my 2.1 prediction.** The Jensen argument")
+
+# Write-up and appendices
+sub(W, "Even with the penalty chosen in hindsight, no linear model beats the class means.",
+       "Even with the penalty chosen in hindsight (post hoc), no linear model beats the class means by more than about 0.001 percentage points.")
+sub(W, "Its weights come from the class means, not the characteristics, and the gain is associated with re-estimating those means each year.",
+       "Its weights come from the class means, not the characteristics, and a post-hoc comparison associates the gain with re-estimating those means each year.")
+sub(W, "The static fit is worst for every model: on the same months, static minus expanding",
+       "The static fit is worst for every model: on the same months (paired differences, post hoc), static minus expanding")
+sub(W, "Against each asset's own trailing mean the picture looks better (Table 3.10c):",
+       "Against each asset's own trailing mean the picture looks better (post hoc; Table 3.10c):")
+sub(W, "**No exploitable nonlinearity** (post hoc;", "**No detectable nonlinearity** (post hoc;")
+sub(W, "Lasso keeps no variable in half of its refits.", "No variable is selected in half or more of lasso's refits.")
+sub(W, "Frozen at its 2010 estimates, the same model earns", "Frozen at its 2010 estimates (a post-hoc diagnostic), the same model earns")
+sub(W, "Frozen at its 2010 estimate, the tilt does worse than risk parity.", "Frozen at its 2010 estimate (a post-hoc diagnostic), the tilt does worse than risk parity.")
+sub(W, "the headline test could only detect an R²_OOS of about 0.5%, above the range the literature reports.",
+       "the headline test could reliably detect only an R²_OOS of about 0.5–0.7%, at or above the top of the range the literature reports.")
+sub(W, "| P1 on ridge M2, static (2010 forecasts frozen; diagnostic) |", "| P1 on ridge M2, static (2010 fit frozen; post hoc) |")
+sub(W, "| P1 on ridge M2, rolling (not selected; diagnostic) |", "| P1 on ridge M2, rolling (not selected; post hoc) |")
+sub(W, "Months are treated as independent; serial dependence was not checked.",
+       "Months are treated as independent; a post-hoc moving-block bootstrap (Tables 3.12c–d, our construction) gives SEs a median of 1.19 times larger.")
+sub(W, r"\qquad\text{(L5 p.55–57; never `r2_score`, which uses the test mean: AI Coding Guide §4d)}$$",
+       "$$\n\n(L5 p.55–57; never `r2_score`, which uses the test mean: AI Coding Guide §4d.)")
+sub(W, "The static version holds the forecasts of 2010 fixed, so it separates",
+       "The static version holds the 2010 fit (coefficients and class means) fixed, so it separates")
+sub(W, "(L4 p.43; L5 p.41).\n\n### 3.2 Feature engineering",
+       "(L4 p.43; L5 p.41). It sorts the volatility-scaled return $y$, the target, rather than the raw return, so that within a class each asset's return counts in units of its own risk.\n\n### 3.2 Feature engineering")
+sub(W, "The design's \"one-way turnover\" means this sum, not half of it, so the cost is conservative under the half-sum convention.",
+       "The design text says \"one-way turnover\"; the cost is charged on this sum, which is twice one-way turnover under the usual half-sum convention, so the cost is conservative.")
+
 # ---------------------------------------------------------------- no reference to the working process may remain
 BANNED = re.compile(r"\bP-[A-S]\b|\breview(?:ed|er|s)?\b|referee|\baudit\b(?! report)|final audit|approv|student's request|"
                     r"\bthe student\b|41-cell|107-cell|this version|version control|\bcommit\b(?! before you compute)|"

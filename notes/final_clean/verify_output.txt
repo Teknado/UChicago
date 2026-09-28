@@ -1,6 +1,7 @@
 [PASS] structure: 41 cells, template cell types, exam cells unchanged (setup cells: data path; cell 21 fills in SEED)
-[PASS] code: all 2097 code lines equal the reference (only the eleven Table 3.31 labels and one explicit scoring= changed)
-[PASS] outputs: identical to the reference (labels mapped; timings and the Table 3.16 floating-point count excepted); 20 of 20 figures byte-identical
+[PASS] code: all 2097 code lines have the same logic as the reference (differences only inside strings: captions and labels; plus scoring=, the full-width design table and the statsmodels version)
+[PASS] outputs: every printed number identical to the reference, in order (timings, labels and the design table text excepted); 20 of 20 figures byte-identical
+  explained: none
 [PASS] numbers: 3 numbers in answers/write-up not found verbatim in any output (reference: 3); new: []
 [PASS] AI Coding Guide §4a shuffle=True only in the exam's Problem 1 folds
 [PASS] AI Coding Guide §4a train_test_split only in Problem 1.4 (a cross-section)
@@ -14,6 +15,6 @@
 [PASS] AI Coding Guide §3 no pandas-1 idioms or sns.set() (DataFrame.append would raise in pandas 3; the run has no errors)
 [PASS] AI Coding Guide ddof never left to numpy's default in .var()/.std() on arrays
 [PASS] no reference to the working process (code, text and printed output; the exam's own text excepted)
-[PASS] methodology: 310 distinct numbers; all appear in the notebook (outputs, code or text)
+[PASS] methodology: 318 distinct numbers; all appear in the notebook (outputs, code or text)
 
 ALL CHECKS PASSED
