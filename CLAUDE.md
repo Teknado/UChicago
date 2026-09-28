@@ -71,6 +71,7 @@ and how to change things safely. The detailed records are `METHODOLOGY_LOG.md` (
 | `PROJECT_PLAN.md` | The approved plan for all three problems, with lecture citations and an errata section at the end. |
 | `LECTURE_METHODS_P3.md` | 152 rows: every method in L1–L8, whether Problem 3 uses it, and why or why not, citing printed numbers. §6 holds the proposals P-A … P-S and their status. |
 | `AI_Coding_Guide.pdf`, `Lecture_1.pdf` … `Lecture_8.pdf` | Course materials. |
+| `notes/` | Working materials (see `notes/README.md`): lecture text extractions (grep-able, PDF pages) and slide-cited notes, the data profile, the plans and competing P3 designs, the referee and final-audit reports, the eight per-lecture catalogues, and `notes/p3_build/` (the Problem 3 cell sources, a 1–2 minute development runner and the build scripts). |
 | `*.csv` | Data. Problem 1: `Social_Network_Ads.csv`. Problem 2: `dj30.csv`. Problem 3: `asset_panel.csv`, `asset_info.csv`, `asset_returns_wide.csv`, `macro_global.csv`, `macro_country.csv`, `macro_country_extended.csv`. |
 
 **Git.**
@@ -79,8 +80,12 @@ and how to change things safely. The detailed records are `METHODOLOGY_LOG.md` (
 - Do not open a pull request unless the student asks.
 - Commits before `c31b023` belong to an earlier, separate effort; ignore them.
 
-**The scratch workspace is gone.** Earlier sessions kept Problem 3's cell sources and build scripts in a temporary
-scratchpad, which no longer exists. **The notebook is now the only source of truth**: edit its cells directly.
+**The notebook is the source of truth.** Problem 3's cell sources and build scripts are saved in `notes/p3_build/`,
+and they matched the notebook exactly on 2026-09-28. Either edit the notebook's cells directly, or edit those sources
+and rebuild with `notes/p3_build/build_nb.py` (which clears the Problem 3 outputs, so the notebook must then be
+re-executed); never mix the two. `python3 notes/p3_build/dev_all.py`, run from the repository root, runs all Problem 3
+cells in 1–2 minutes from a saved ledger, which is useful for testing a change before the full 11-minute run.
+To find what a lecture says, `grep` `notes/lectures/Lecture_N.txt` (pages delimited by `===== PAGE n =====`).
 
 ## 5. Notebook map (0-based cell indices, current)
 

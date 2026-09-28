@@ -1,0 +1,882 @@
+
+===== PAGE 1 =====
+BUSN 41210: Financial Analytics
+Lecture 1: Introduction, Data Visualization, and Dimension
+Reduction
+Dacheng Xiu
+Chicago Booth
+September 8, 2026
+© 2026 Dacheng Xiu, Chicago Booth Restricted Materials. All Rights Reserved.
+1
+
+===== PAGE 2 =====
+Course Overview
+1. Introduction, Data Visualization, and Dimension Reduction
+2. Linear Regression Models
+3. Transformations, Interactions, Categorical Variables, Multiple Linear Regressions
+4. Model Selection Principles, Screening, Information Criteria, Stepwise Selection
+5. Regularization in Linear Models: Lasso & Ridge
+6. Classification, Multinomials, KNN, Sensitivity/Specificity
+7. Clustering, Mixture models, K-means
+8. Trees, Random Forests, Boosted Trees, Variable Importance
+9. Machine Learning in Finance: Advanced Applications
+2
+
+===== PAGE 3 =====
+Jupyter Hub
+▶We use Jupyter Hub for this class:
+https://jupyter-class.chicagobooth.edu/
+▶Use your CNet ID and password to log on (provided that you have a Booth ID)
+▶Each of you has a folder. You can use shared data in this folder:
+/classes/41210_MiF_fall2026/ and run codes on the Booth server.
+▶You do not even need have Python installed on your personal computer.
+3
+
+===== PAGE 4 =====
+Outline
+1. Introduction
+▶What is Big Data?
+▶What is Machine Learning?
+▶Can Machines Learn Finance?
+2. Data Visualization
+3. Dimension Reduction
+4
+
+===== PAGE 5 =====
+Data: The New...
+5
+
+===== PAGE 6 =====
+Data Never Sleeps 5.0
+by Domo
+6
+
+===== PAGE 7 =====
+Machine Learning Rocks!
+Machine Learning Successes
+7
+
+===== PAGE 8 =====
+Machine Learning Rocks!
+Machine Learning Successes
+1997 Deep Blue beats Kasparov
+7
+
+===== PAGE 9 =====
+Machine Learning Rocks!
+Machine Learning Successes
+1997 Deep Blue beats Kasparov
+2009 Google self-driving car
+7
+
+===== PAGE 10 =====
+Machine Learning Rocks!
+Machine Learning Successes
+1997 Deep Blue beats Kasparov
+2009 Google self-driving car
+2011 Watson wins Jeopardy!
+7
+
+===== PAGE 11 =====
+Machine Learning Rocks!
+Machine Learning Successes
+1997 Deep Blue beats Kasparov
+2009 Google self-driving car
+2011 Watson wins Jeopardy!
+2012 Microsoft translates English to
+Chinese in real time
+7
+
+===== PAGE 12 =====
+Machine Learning Rocks!
+Machine Learning Successes
+1997 Deep Blue beats Kasparov
+2009 Google self-driving car
+2011 Watson wins Jeopardy!
+2012 Microsoft translates English to
+Chinese in real time
+2016 AlphaGo beats Lee Sedol
+7
+
+===== PAGE 13 =====
+Machine Learning Rocks!
+Machine Learning Successes
+1997 Deep Blue beats Kasparov
+2009 Google self-driving car
+2011 Watson wins Jeopardy!
+2012 Microsoft translates English to
+Chinese in real time
+2016 AlphaGo beats Lee Sedol
+2021 AlphaFold predicts protein
+structure
+7
+
+===== PAGE 14 =====
+Machine Learning Rocks!
+Machine Learning Successes
+1997 Deep Blue beats Kasparov
+2009 Google self-driving car
+2011 Watson wins Jeopardy!
+2012 Microsoft translates English to
+Chinese in real time
+2016 AlphaGo beats Lee Sedol
+2021 AlphaFold predicts protein
+structure
+2022 OpenAI’s chatbot “ChatGPT”
+7
+
+===== PAGE 15 =====
+What is “Machine Learning”?
+8
+
+===== PAGE 16 =====
+A Paradigm Shift
+There is a paradigm shift from machine programming to machine learning.
+▶In conventional programming, tell computer what to do, breaking big problems
+into many small, precisely defined tasks
+▶Learn (estimate) from observational data, instead of requiring pre-specified logic,
+for decision making and problem solving
+9
+
+===== PAGE 17 =====
+Is this a valid email address? dacheng.xiu@chicagobooth.edu
+Conventional Programming
+IF upper/lowercase letters or digits
+AND “@” followed by a valid domain
+AND NOT special characters “!#$...”
+AND ...
+THEN valid
+ELSE invalid
+10
+
+===== PAGE 18 =====
+Is this a valid email address? dacheng.xiu@chicagobooth.edu
+Conventional Programming
+Machine Learning
+IF upper/lowercase letters or digits
+AND “@” followed by a valid domain
+AND NOT special characters “!#$...”
+AND ...
+THEN valid
+ELSE invalid
+1. (Big) data on valid/invalid email addresses
+Y/N
+Address
+0
+jaime@lannister
+1
+hound@clegane.com
+0
+john.snow@GO†.edu
+. . .
+. . .
++
+2. Stats Model: Y/N = b0 + b1(@) +b2(!#$&%?* ) ...
+=
+3. Estimated probability of valid email
+10
+
+===== PAGE 19 =====
+What Number is This?
+Now let’s try a harder example
+11
+
+===== PAGE 20 =====
+What Number is This?
+▶How would you even approach a problem like this, in either scenario?
+▶One approach could be to turn each pixel into values from 0 to 1 depending on
+the grayscale brightness of that pixel.
+12
+
+===== PAGE 21 =====
+What Number is This?
+▶Even still, how do you code up an algorithm (a step-by-step procedure) to tell you
+that the previous three is the same as this three?
+13
+
+===== PAGE 22 =====
+What Number is This?
+▶Or this three?
+14
+
+===== PAGE 23 =====
+What Number is This?
+▶You need a flexible approach that can learn patterns of what makes a three a
+“three”, and that’s where machine learning shines.
+Figure: A Neural Network with 2 hidden layers, each with 16 neurons, and 10 labels
+15
+
+===== PAGE 24 =====
+What is Machine Learning?
+Arthur Samuel coined the term Machine Learning in his 1959 paper: “Some studies in
+machine learning using the game of checkers.”
+Combine expertise from statistics on how to extract information from data with
+computational ideas that enable efficient implementation on large data sets.
+Machine learning is to big data as human learning is to life experience.
+Machine learning mimics human learning.
+When a person learns to catch a ball, they do so without first being taught complicated
+motion equations. Instead, they practice and learn through repeated trial and error.
+16
+
+===== PAGE 25 =====
+Machine Learning Paradigms
+▶Supervised learning (“predictive analytics”): a class of systems and algorithms that
+determine a predictive model using data points with known outcomes. Regression - The model
+finds outputs that are real variables; Classification - The model finds classes in which to place its
+inputs.
+▶Predict Default; Predict Housing Prices; Predict Asset Returns; . . .
+▶Unsupervised learning (“exploratory data analysis”): a type of algorithm that learns
+patterns from unlabeled data.
+▶Recommender system (Amazon - frequently bought together, products you may like,
+products related to this item; Netflix - Top Picks for you); Language modeling in NLP;
+▶Reinforcement learning: concerned with how intelligent agents make a sequence of decisions
+in an uncertain, potentially complex environment. In reinforcement learning, an intelligent agent
+faces a game-like situation. The agent employs trial and error to come up with a solution to the
+problem. It gets either rewards or penalties for the actions it performs. Its goal is to maximize
+the total reward.
+▶Alpha Star playing Atari, Starcraft; Alpha Go; Self-Driving Cars; . . .
+Watch a free documentary movie of AlphaGo on Youtube to gain some insight about reinforcement learning.
+17
+
+===== PAGE 26 =====
+Can Machines Learn Finance?
+Machines seem capable of anything...
+▶Speech recognition, translation, driving, chess/go, ...
+... but can they learn finance?
+18
+
+===== PAGE 27 =====
+The Hype
+CNBC, July 12, 2017
+Bloomberg, July 15, 2017
+Bloomberg, Aug 9, 2017
+Same Reporter
+3 weeks later
+Economist, May 2017
+Economist, Dec 2017
+19
+
+===== PAGE 28 =====
+Machine Learning Adoption
+20
+
+===== PAGE 29 =====
+AIEQ ETF
+▶What is it? Source: https://www.aieqetf.com/
+AIEQ is the first actively-managed ETF to utilize artificial intelligence throughout the investment
+process. The underlying fund investments in AIEQ are based on the results of proprietary
+quantitative models developed by Equbot with IBM Watson artificial intelligence.
+21
+
+===== PAGE 30 =====
+AIEQ ETF
+▶What is it? Source: https://www.aieqetf.com/
+AIEQ is the first actively-managed ETF to utilize artificial intelligence throughout the investment
+process. The underlying fund investments in AIEQ are based on the results of proprietary
+quantitative models developed by Equbot with IBM Watson artificial intelligence.
+▶Performance? Source: Yahoo Finance
+21
+
+===== PAGE 31 =====
+Sentient Investment
+▶“Will AI-Powered Hedge Funds Outsmart the Market?”
+MIT Technology Review, Feb 4, 2016
+... new financial firms that advertise themselves as AI-focused may be on to something. These
+include Sentient, based in San Francisco, ...
+▶“Trading, Evolved.” Source: http://www.sentientim.com/about/
+Combining evolutionary intelligence technologies, deep learning algorithms and other techniques
+that identify and propagate the most successful strategies, SIM’s distributed artificial intelligence
+system is continuously processing and learning from enormous stockpiles of data, developing
+investment strategies in groundbreaking new ways.
+22
+
+===== PAGE 32 =====
+Sentient Investment
+▶“Will AI-Powered Hedge Funds Outsmart the Market?”
+MIT Technology Review, Feb 4, 2016
+... new financial firms that advertise themselves as AI-focused may be on to something. These
+include Sentient, based in San Francisco, ...
+▶“Trading, Evolved.” Source: http://www.sentientim.com/about/
+Combining evolutionary intelligence technologies, deep learning algorithms and other techniques
+that identify and propagate the most successful strategies, SIM’s distributed artificial intelligence
+system is continuously processing and learning from enormous stockpiles of data, developing
+investment strategies in groundbreaking new ways.
+▶“AI Hedge Fund Is Said to Liquidate After Less Than Two Years” Bloomberg, Sept
+6, 2018
+22
+
+===== PAGE 33 =====
+But Why?
+Finance is Different!
+▶Low signal-to-noise ratios (SNR) in sharp contrast with CS
+Domain Knowledge (thanks to Gene Fama):
+▶Market Efficiency: Returns must be dominated by news in well-functioning
+markets
+▶Low SNRs are not a coincidence ...market efficiency reinforces it!
+23
+
+===== PAGE 34 =====
+Need for Machines
+“Big data” is not just about the size of the data!
+▶Historical data in finance (and economics) are typically not large in size, barely
+10s of years, 100s of months. Lack of stationarity effectively shrinks the counts
+further.
+▶Finance does have lots of variables. With n = 100 data points, infeasible to run
+linear regressions with p = 100 variables.
+▶In cases like this (n ≈p), ML is inevitable.
+Why Machine Learning for Finance?
+▶Lots of explanatory variables with potentially high correlations
+▶Functional form is unknown and likely complex (nonlinear)
+24
+
+===== PAGE 35 =====
+“ML” is Inevitable
+Has ML been used before? Yes, perhaps without knowing or emphasizing it.
+“In Finance, Humans Were the First Machines,” Chicago Booth Review, Feb 05, 2024
+▶nonlinearity: sorting returns by characteristics
+▶dimension reduction: employing portfolios instead of individual assets
+▶variable selection and factor analysis: e.g., Fama-French factors
+▶priors (regularization): incorporating economic intuition/theory
+▶...
+Why not embrace modern ML techniques?
+25
+
+===== PAGE 36 =====
+ML-based Portfolios
+1987
+1990
+1993
+1996
+1999
+2002
+2005
+2008
+2011
+2014
+2016
+       Short Position               Long Position           
+4
+2
+0
+2
+4
+6
+8
+OLS-3+H
+PLS
+PCR
+ENet+H
+GLM+H
+RF
+GBRT+H
+NN3
+SP500-Rf
+solid = long
+dash = short
+Source: Gu, Kelly and Xiu (2019) “Empirical Asset Pricing via Machine Learning”
+26
+
+===== PAGE 37 =====
+Data Visualization
+Data visualization is an essential part of exploratory data analysis (EDA)
+Some guidelines:
+▶Statistics: reducing dimension of your data to a few rich variables for comparison.
+Can be just picking two features to scatterplot, or can involve more complicated
+projections.
+▶Design: effective communication – with shapes, space, and color – for a given set
+of variable observations.
+▶Language: making it easy to move from Stats to Design.
+They’re all interconnected, but we’ll focus on statistics.
+27
+
+===== PAGE 38 =====
+Example: Time Series
+20160104
+20161018
+20170804
+20180522
+20190311
+20191223
+20201008
+20210727
+date
+100
+200
+300
+400
+500
+Stock price
+Apple announces 4-1 stock split
+Time series for Apple Stock Price
+20160104
+20161018
+20170804
+20180522
+20190311
+20191223
+20201008
+20210727
+date
+0.10
+0.05
+0.00
+0.05
+0.10
+Stock Return
+Apple announces 4-1 stock split
+Time series for Apple Stock Return
+28
+
+===== PAGE 39 =====
+Would you like to invest in this new product (red)?
+S&P 100 (yellow), Lehman Bond Index (orange), FS (blue), Simulated 3x FS (red)
+29
+
+===== PAGE 40 =====
+Example: Spatial Data
+Source: “Quantitative Social Science: An Introduction”, Kosuke Imai
+30
+
+===== PAGE 41 =====
+Example: Spatial-Temporal Data
+Source: “Quantitative Social Science: An Introduction”, Kosuke Imai
+31
+
+===== PAGE 42 =====
+Example: Panel Data
+A Biplot is constructed by the SVD to obtain a low-rank approximation to the data
+X ≈Z = UDV ⊺,
+where X is T × n, U is T × 2, D is 2 × 2, V is n × 2.
+Component 1
+0
+0.05
+0.1
+0.15
+0.2
+0.25
+Component 2
+-0.12
+-0.1
+-0.08
+-0.06
+-0.04
+-0.02
+0
+0.02
+0.04
+0.06
+Week: 03/07/2005 -- 03/11/2005
+Non-Financial
+Financial
+Component 1
+0
+0.05
+0.1
+0.15
+0.2
+0.25
+0.3
+Component 2
+-0.15
+-0.1
+-0.05
+0
+0.05
+0.1
+0.15
+AIG
+C
+GS
+BAC
+JPM
+LEH
+Week: 03/10/2008 -- 03/14/2008
+Non-Financial
+Financial
+Source: “Principal Component Analysis of High-Frequency Data”, A¨ıt-Sahalia and Xiu (2019), JASA Vol 114, No 525, 287-303.
+32
+
+===== PAGE 43 =====
+A scree plot is a graph of eigenvalues against the corresponding PC number.
+0
+10
+20
+30
+40
+50
+60
+70
+80
+90
+0
+0.5
+1
+1.5
+2
+2.5
+2003
+2005
+2007
+2009
+2011
+2013
+  0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+1st
+2nd
+3rd
+≥ 4 Average
+Source: “Principal Component Analysis of High-Frequency Data”, A¨ıt-Sahalia and Xiu (2019), JASA Vol 114, No 525, 287-303.
+33
+
+===== PAGE 44 =====
+What “Correlated ” Means
+Two variables are correlated if knowing one tells you something about the
+other.
+Cov(X, Y ) = E
+
+(X −EX)(Y −EY )
+
+,
+ρXY = Cov(X, Y )
+sd(X) sd(Y ).
+When X is above its average, is Y above its average? Multiply the two deviations and average. Its size
+depends on the units, so divide by both standard deviations: correlation is covariance in units that
+cancel.
+▶ρ lies between −1 and +1: +1 a perfect line sloping up, −1 sloping down, 0 no linear relation.
+▶A correlation matrix is every pair at once — diagonal 1, symmetric, and a heat map of it is the
+fastest way to see structure in a wide dataset. df.corr().
+▶ρ = 0 does not mean “unrelated”, only no straight-line relation: a perfect U-shape has ρ ≈0.
+Look at the scatter plot as well as the number.
+And it is why the next block exists: columns that are highly correlated are not carrying
+that many separate pieces of information.
+34
+
+===== PAGE 45 =====
+Dimension Reduction
+▶X is a dataset with T observations of n variables.
+▶Each variable was previously demeaned and write
+X = (X 1, . . . , X n),
+where X i = (Xi1, . . . , XiT)′, for i = 1, . . . , n.
+▶Extract as much information (variance) of X and build another dataset Z with T
+observations but only k ≪n variables:
+Z = (Z 1, . . . , Z k).
+35
+
+===== PAGE 46 =====
+Principal Component Analysis (PCA)
+▶PCA is the most common unsupervised learning approach to dimension reduction.
+▶PCA is a very versatile tool. It can be applied in many different situation such as:
+▶Visualization of large datasets
+▶Efficient use of resources ( e.g.: compression)
+▶Noise reduction (improving data quality)
+▶Pre-treatment of the data for further machine learning algorithms
+▶In fact, it can be applied in any situation that requires dimension (number of
+features) reduction.
+▶It accomplishes such a reduction by “rotating” the dataset in a smart way.
+36
+
+===== PAGE 47 =====
+Motivation
+You want to take a picture of a group of people.
+37
+
+===== PAGE 48 =====
+What is the best position? I, II, III, or IV?
+38
+
+===== PAGE 49 =====
+Camera I? Let’s look at the projection.
+39
+
+===== PAGE 50 =====
+Camera I? Let’s look at the projection.
+40
+
+===== PAGE 51 =====
+Camera II? Let’s look at the projection.
+41
+
+===== PAGE 52 =====
+Camera II? Let’s look at the projection.
+42
+
+===== PAGE 53 =====
+Camera III? Let’s look at the projection.
+43
+
+===== PAGE 54 =====
+Camera III? Let’s look at the projection.
+44
+
+===== PAGE 55 =====
+Camera IV? Let’s look at the projection.
+45
+
+===== PAGE 56 =====
+Camera IV? Let’s look at the projection.
+46
+
+===== PAGE 57 =====
+Comparing the cameras.
+Position of camera IV seems to be the best one
+47
+
+===== PAGE 58 =====
+How Should We Find the Best Position for the Camera?
+X is a set of points in R2 with sample covariance bΣ
+48
+
+===== PAGE 59 =====
+What does the transformation Z = X bΣ do?
+49
+
+===== PAGE 60 =====
+What does the transformation Z = X bΣ do?
+49
+
+===== PAGE 61 =====
+What does the transformation Z = X bΣ do? Circle −→ellipse.
+50
+
+===== PAGE 62 =====
+Two special vectors: the eigenvectors. Two special scalars: the eigenvalues.
+51
+
+===== PAGE 63 =====
+The Math of PCA
+▶Let bΣ denote the (n × n) sample covariance matrix of X:
+bΣ = 1
+T X ′X
+Remember: X has been centered.
+▶Note that bΣ is symmetric but might rank less than n if, for instance, T < n.
+▶The idea is to look for a vector γ ∈Rn such that the sample variance of Xγ is
+maximized.
+52
+
+===== PAGE 64 =====
+▶The sample variance of Xγ is given by
+1
+T γ′X ′Xγ = γ′ bΣγ
+▶Without any additional constraints, we could pick a very large γ and obtain
+infinite variance (not useful).
+▶Let’s look only for unitary vectors, i.e., ∥γ∥= 1, or equivalently γ′γ = 1.
+53
+
+===== PAGE 65 =====
+First Principal Component
+▶Formally, we want to solve the following constrained optimization:
+max
+γ∈Rn γ′ bΣγ
+s.t
+γ′γ = 1.
+▶The Lagrangian is given by:
+L(γ, λ) = γ′ bΣγ −λ(γ′γ −1),
+where λ ∈R is the Lagrange multiplier.
+54
+
+===== PAGE 66 =====
+First Principal Component
+▶Taking the derivative of the Lagrangian with respect to γ and setting equal to
+zero we obtain the solution:
+∂
+∂γ1
+h
+γ′
+1 bΣγ1 −λ1(γ′
+1γ1 −1)
+i
+= 0
+bΣγ1 −λ1γ1 = 0
+bΣγ1 = λ1γ1
+▶This is an eigenvector equation where γ1 is an eigenvector of bΣ and λ1 is the
+associated eigenvalue.
+▶Which pair of eigenvector/eigenvalue should we choose?
+55
+
+===== PAGE 67 =====
+▶If we recognize that the quantity to be maximized is
+γ′
+1 bΣγ1
+|{z}
+=λ1γ1
+= γ′
+1λ1γ1 = λ1γ′
+1γ1 = λ1,
+then we should choose λ1 to be as large as possible.
+▶Solution: pick the eigenvector associated with the largest eigenvalue of bΣ.
+▶We call Z 1 := Xγ1 the first principal component (PC) of X and note that its
+variance is given by λ1!
+56
+
+===== PAGE 68 =====
+Second Principal Component
+▶Now that we have the first PC, how can we define the second?
+▶The second PC also comes from the maximization of γ′ bΣγ with respect to the
+unitary vector γ that has to be (sample) uncorrelated with the first one!
+57
+
+===== PAGE 69 =====
+▶The sample covariance between the vectors Xγ and Xγ1 is
+1
+T (Xγ)′Xγ1 = γ′ 1
+T X ′Xγ1
+= γ′ bΣγ1
+= λ1γ′γ1
+⇐bΣγ1 = λ1γ1
+▶The restriction imposing PCs 1 and 2 to be uncorrelated translates into requiring
+γ and γ1 to be orthogonal:
+γ′γ1 = 0
+58
+
+===== PAGE 70 =====
+▶Therefore, we look for the solution of
+max
+γ∈Rn γ′ bΣγ
+s.t
+γ′γ = 1
+and
+γ′γ1 = 0
+▶In this case, the Lagrangian becomes
+L(γ, λ, ϕ) = γ′ bΣγ −λ(γ′γ −1) −ϕγ′γ1
+where λ, ϕ ∈R are the Lagrange multipliers.
+59
+
+===== PAGE 71 =====
+▶The First Order Conditions (FOC):
+∂
+∂γ2
+h
+γ′
+2 bΣγ2 −λ2(γ′
+2γ2 −1) −ϕγ′
+2γ1
+i
+= 0
+bΣγ2 −λ2γ2 −ϕγ1 = 0
+▶If we left multiply the expression above by γ1:
+γ′
+1 bΣγ2 −λ2γ′
+1γ2 −ϕγ′
+1γ1 = 0
+0 −0 −ϕ1 = 0
+▶Hence, ϕ = 0 and we obtain: bΣγ2 −λ2γ2 = 0.
+60
+
+===== PAGE 72 =====
+▶Once again the solution is in the format of an eigenvalue equation:
+bΣγ2 = λ2γ2
+▶The same strategy of choosing γ2 to be the eigenvector associated with the
+second largest eigenvalue λ2 yields the second PC of X, namely Z 2 = Xγ2.
+▶Also the sample variance of the 2th PC is given by
+γ′
+2 bΣγ2 = λ2γ′
+2γ2 = λ2
+61
+
+===== PAGE 73 =====
+Moving Beyond the First Two Principal Components
+▶As you can probably guess by now, we will end up with a solution for the j-th PC
+of the form
+bΣγj = λjγj,
+with γj orthogonal to all γi, i = 1, 2, . . . , j −1.
+▶Process repeated until j = n, yielding up to n different eigenvectors γ1, . . . γn of
+bΣ and n eigenvalues λ1, . . . , λn.
+▶The PCs are then given by
+Z j := Xγj
+, j = 1, . . . , n.
+62
+
+===== PAGE 74 =====
+▶Given the desired number of PCs, say 1 ≤k ≤n, we collect all the vectors
+γ1, . . . γk in a (n × k) matrix
+Γk := (γ1, . . . γk).
+▶The transformed dataset containing only the first k PCs is the (T × k) matrix is
+given by
+Z (k) := XΓk := (Z 1, . . . , Zk).
+▶Also, by construction, the columns of Z (k) (the PCs) are orthogonal random
+variables, and with sample variances λ1, . . . , λk.
+▶Thus, the sample covariance matrix of Z (k) is given by the (k × k) diagonal matrix
+Λk := diag(λ1, . . . , λk).
+63
+
+===== PAGE 75 =====
+Example: High-Dimensional Data
+t-SNE visualizes nonlinear dimension reduction Ref: van der Maaten and Hinton (2008, JMLR).
+Source: “Business News and Business Cycles”, Bybee, Kelly, Manela, and Xiu (2024), JF Vol 79, Issue 5, 2905-3677.
+64
+
+===== PAGE 76 =====
+Source: “Business News and Business Cycles”, Bybee, Kelly, Manela, and Xiu (2024), JF Vol 79, Issue 5, 2905-3677.
+65
+
+===== PAGE 77 =====
+Example: Text Data
+Source: “Predicting Returns with Text Data”, Ke, Kelly, and Xiu (2021). 39,673 words, millions of articles.
+66
+
+===== PAGE 78 =====
+Example: Social Media Data
+67
+
+===== PAGE 79 =====
+Example: Image Data
+ImageNet (https://image-net.org/): The data that transformed AI research—and
+possibly the world
+68
+
+===== PAGE 80 =====
+What Has Changed, and What Has Not
+These tools can now do the mechanics of data analysis end to end. Hand one a
+spreadsheet and it will load it, notice the header row is wrong, clean it, plot it, fit a
+model and describe the result — in about a minute, without being told the column
+names. That is genuinely new, and it is why this course looks different from the
+version taught five years ago.
+Now read that list again. Not one item on it is the hard part.
+▶Nothing there tells you whether the answer is right.
+▶Nothing there tells you whether the question was worth asking.
+▶Nothing there tells you what would have to be true for the number to mean what you
+want it to mean.
+And the same session that writes correct code will produce a confidently wrong answer
+in exactly the same tone. There is no tell.
+69
+
+===== PAGE 81 =====
+So What Is Scarce Now?
+When the mechanics get close to free, the value moves to the three things that are still
+yours:
+1. Framing. What is the decision? What would count as an answer? A forecast, a
+treatment effect and a trading signal are three different questions about the same data,
+and they need three different setups.
+2. Validation. How would you know if you were fooling yourself? This is most of what the
+next eight lectures are about, and it is the part the machine is worst at, because it
+requires knowing where your data came from.
+3. Judgment. Is 0.72 good? Compared to what? A tool will tell you it is good. It does not
+know your benchmark.
+That list is the syllabus. Nine lectures on it — and you should let the machine write
+the code the whole way. Lecture 9 closes the loop: the tool itself is assembled from
+exactly these parts.
+70
+
+===== PAGE 82 =====
+A Live Demonstration — and What to Watch For
+We hand one of these tools the macroeconomic panel from this course and ask it to
+predict industrial production growth. It will do something impressive. Watch for four
+things.
+▶Does it ask what the data are? Or does it assume? It cannot see where your file came
+from, and it will not usually admit that.
+▶How does it split the data? This is a monthly time series. Watch whether the future ends
+up in the training set. It usually does.
+▶What does it compare the answer to? A number with no benchmark is not a result.
+▶What happens when we push back? Tell it the split was wrong and see whether it defends
+the answer or folds. Both are informative.
+You may use these tools on everything in this course. Lecture 0 and
+AI Coding Guide.pdf are about using them well. This slide is about why the rest of
+the course still exists.
+71

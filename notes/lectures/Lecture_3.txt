@@ -1,0 +1,1044 @@
+
+===== PAGE 1 =====
+BUSN 41210: Financial Analytics
+Lecture 3: Diagnostics and Transformations, Categorical Variables,
+Interactions, Multiple Linear Regressions
+Dacheng Xiu
+Chicago Booth
+September 11, 2026
+© 2026 Dacheng Xiu, Chicago Booth Restricted Materials. All Rights Reserved.
+1
+
+===== PAGE 2 =====
+SLR Model Assumptions
+Yi|Xi
+ind
+∼N(β0 + β1Xi, σ2)
+Recall the key assumptions of our linear regression model:
+(i) The conditional mean of Y is linear in X.
+(ii) The additive errors (deviations from line)
+▶are normally distributed
+▶independent from each other
+▶identically distributed (i.e., they have constant variance)
+2
+
+===== PAGE 3 =====
+SLR Model Assumptions
+Inference and prediction relies on this model being true!
+If the model assumptions do not hold, then all bets are off:
+▶prediction can be systematically biased
+▶standard errors, intervals, and t-tests are wrong
+We will focus on using graphical methods (plots!) to detect violations of the model
+assumptions.
+3
+
+===== PAGE 4 =====
+Example Model Violations
+Anscombe’s quartet comprises four datasets that
+have similar statistical properties...
+> for c in [’1’, ’2’, ’3’, ’4’]:
+x, y = anscombe[’x’+c], anscombe[’y’+c]
+print(x.mean(), y.mean(), x.std(), y.std(),
+np.corrcoef(x, y)[0, 1])
+Output:
+mean(x)
+mean(y)
+sd(x)
+sd(y)
+corr
+set 1
+9.0
+7.5
+3.317
+2.032
+0.816
+set 2
+9.0
+7.5
+3.317
+2.032
+0.816
+set 3
+9.0
+7.5
+3.317
+2.030
+0.816
+set 4
+9.0
+7.5
+3.317
+2.031
+0.817
+4
+
+===== PAGE 5 =====
+Example Model Violations
+...but vary considerably when graphed:
+4
+6
+8
+10
+12
+14
+4
+6
+8
+10
+Dataset 1
+4
+6
+8
+10
+12
+14
+4
+6
+8
+Dataset 2
+4
+6
+8
+10
+12
+14
+7.5
+10.0
+12.5
+Dataset 3
+8
+10
+12
+14
+16
+18
+6
+8
+10
+12
+Dataset 4
+5
+
+===== PAGE 6 =====
+Example Model Violations
+Similarly, let’s consider linear regression for each dataset.
+4
+6
+8
+10
+12
+14
+4
+6
+8
+10
+Dataset 1
+4
+6
+8
+10
+12
+14
+4
+6
+8
+10
+Dataset 2
+4
+6
+8
+10
+12
+14
+5.0
+7.5
+10.0
+12.5
+Dataset 3
+8
+10
+12
+14
+16
+18
+6
+8
+10
+12
+Dataset 4
+6
+
+===== PAGE 7 =====
+Example Model Violations
+The regression lines and R2 values are the same...
+# Store models in a list
+> ansreg = [smf.ols(formula=f’y{i} ∼
+x{i}’, data=anscombe).fit() for i in range(1, 5)]
+# Get the coefficients for each regression model
+> coefs = np.column stack([reg.params for reg in ansreg])
+> coefs rounded = np.round(coefs, 1)
+> coefs rounded
+Output:
+[[3.0 3.0 3.0 3.0]
+[0.5 0.5 0.5 0.5]]
+# Apply summary to each model and get R-squared values
+> smry = [reg.rsquared for reg in ansreg]
+> r squared rounded = np.round(smry, 1)
+> r squared rounded
+Output: [0.7, 0.7, 0.7, 0.7]
+7
+
+===== PAGE 8 =====
+Example Model Violations
+...but the residuals (plotted against ˆY ) look totally different.
+5
+6
+7
+8
+9
+10
+2
+0
+2
+Dataset 1
+5
+6
+7
+8
+9
+10
+2
+1
+0
+1
+Dataset 2
+5
+6
+7
+8
+9
+10
+0
+2
+Dataset 3
+7
+8
+9
+10
+11
+12
+1
+0
+1
+2
+Dataset 4
+Plotting e vs ˆY is your #1 tool for finding fit problems.
+8
+
+===== PAGE 9 =====
+Residuals and the Model Assumptions
+Recall that the linear regression model assumes
+Yi = β0 + β1Xi + εi,
+where εi
+iid∼N(0, σ2)
+Our goal is to determine if the “true” residuals are iid normal and unrelated to X. If
+the SLR model assumptions are true, then the residuals must be just “white noise”:
+(i) Each εi has the same variance (σ2).
+(ii) Each εi has the same mean (0).
+(iii) All of the εi have the same normal distribution.
+9
+
+===== PAGE 10 =====
+Residuals and the Model Assumptions
+Since the true εi residuals are unknown, we must look instead at the least squares
+estimated residuals.
+We estimate Yi = b0 + b1Xi + ei, such that the sample least squares regression
+residuals are ei = Yi −ˆYi.
+What should the ei residuals look like if the SLR model is true?
+10
+
+===== PAGE 11 =====
+Residuals and the Model Assumptions
+If the SLR model is true, it turns out that:
+ei ∼N(0, σ2[1 −hi]),
+hi = 1
+n +
+(Xi −¯X)2
+Pn
+j=1(Xj −¯X)2.
+The hi term is referred to as the ith observation’s leverage:
+▶It is that point’s share of the data (1/n) plus its proportional contribution to
+variability in X.
+▶As n →∞, hi →0 and residuals become εi ∼N(0, σ2).
+11
+
+===== PAGE 12 =====
+Understanding Leverage
+The hi leverage term measures sensitivity of the estimated least squares regression line
+to changes in Yi.
+The term “leverage” provides a mechanical intuition:
+▶The farther you are from a pivot joint, the
+more torque you have pulling on a lever.
+Outliers do more damage if they have high leverage!
+12
+
+===== PAGE 13 =====
+Standardized Residuals
+Since ei ∼N(0, σ2[1 −hi]), we know that
+ei
+σ√1 −hi
+∼N(0, 1).
+These transformed ei’s are called the Standardized Residuals.
+They all have the same distribution if the SLR model is true.
+They are almost (close enough) independent (iid∼N(0, 1)).
+13
+
+===== PAGE 14 =====
+Standardized Residuals
+As always, we don’t know sd(ε) = σ.
+Usually, we estimate σ2 ≈s2 =
+1
+n−p
+Pn
+j=1 e2
+j (p = 2 for SLR).
+Here, we want to see whether any particular ei is “too big”, and you don’t want a
+single outlier to make s artificially large.
+4
+6
+8
+10
+12
+14
+x3
+5
+6
+7
+8
+9
+10
+11
+12
+13
+y3
+Dataset 3
+One big outlier can make s overestimate σ
+14
+
+===== PAGE 15 =====
+Studentized Residuals
+We thus define a Studentized Residual as
+ri =
+ei
+s−i
+√1 −hi
+∼tn−p−1(0, 1)
+where s2
+−i =
+1
+n−p−1
+P
+j̸=i e2
+j is ˆσ calculated without ei.
+These are easy to get in Python with the
+OLSInfluence().resid studentized external function.
+> OLSInfluence(reg1).resid_studentized_external
+Output:
+0
+1
+2
+3
+4
+0.031345 -0.040845 -2.081099 1.126800 -0.139801
+5
+6
+7
+8
+9
+-0.038196
+1.116959 -0.704581 1.838330 -1.568460
+10
+0.156809
+15
+
+===== PAGE 16 =====
+Outliers and Studentized Residuals
+Since the studentized residuals are distributed tn−p−1(0, 1), we should be concerned
+about any ri outside of about [−2.5, 2.5].
+Consider the 3rd Anscombe dataset:
+5
+6
+7
+8
+9
+10
+Fitted values
+1
+0
+1
+2
+3
+Residuals
+5
+6
+7
+8
+9
+10
+Fitted values
+0
+200
+400
+600
+800
+1000
+1200
+Studentized Residuals
+16
+
+===== PAGE 17 =====
+How to Deal with Outliers
+When should you delete outliers?
+Only when you have a really good reason!
+There is nothing wrong with running regression with and without potential outliers to
+see whether results are significantly impacted.
+Any time outliers are dropped, the reasons for doing so should be clearly noted.
+17
+
+===== PAGE 18 =====
+Outliers, Leverage, and Residuals
+Warning:
+Unfortunately, outliers with high leverage are hard to catch through ri
+(since the line is pulled towards them).
+Consider data on house Rents vs SqFt:
+0
+20
+40
+60
+80
+SqFt
+0
+250
+500
+750
+1000
+1250
+Rent
+0
+20
+40
+60
+80
+SqFt
+4
+2
+0
+2
+4
+Studentized Residuals
+Plots of ri or ei against ˆYi or Xi are still your best diagnostic!
+18
+
+===== PAGE 19 =====
+Beyond SLR
+Many problems involve more than one independent variable or factor which affects the
+dependent or response variable.
+▶Multi-factor asset pricing models (beyond CAPM)
+▶Demand for a product given prices of competing brands, advertising, household
+attributes, etc.
+▶More than size to predict house price!
+In SLR, the conditional mean of Y depends on X. The Multiple Linear Regression
+(MLR) model extends this idea to include more than one independent variable.
+19
+
+===== PAGE 20 =====
+The MLR Model
+In general, the MLR model is same as always, but with more covariates.
+Y |X1 . . . Xd
+ind
+∼N(β0 + β1X1 . . . + βdXd, σ2)
+Recall the key assumptions of our linear regression model:
+(i) The conditional mean of Y is linear in the Xj variables.
+(ii) The additive errors (deviations from line)
+▶are normally distributed
+▶independent from each other
+▶identically distributed (i.e., they have constant variance)
+20
+
+===== PAGE 21 =====
+The MLR Model
+Our interpretation of regression coefficients can be extended from the simple single
+covariate regression case:
+βj = ∂E[Y |X1, . . . , Xd]
+∂Xj
+Holding all other variables constant,
+βj is the average change in Y per unit change in Xj.
+21
+
+===== PAGE 22 =====
+The Data and Least Squares
+The data in multiple regression is a set of points with values for output Y and for each
+input variable.
+Data: Yi and xi = [X1i, X2i, . . . , Xdi], for i = 1, . . . , n.
+Or, as a data array (i.e., DataFrame),
+Data =
+
+
+Y1
+X11
+X21
+. . .
+Xd1
+Y2
+X12
+X22
+. . .
+Xd2
+...
+Yn
+X1n
+X2n
+. . .
+Xdn
+
+
+22
+
+===== PAGE 23 =====
+The Data and Least Squares
+Y = β0 + β1X1 . . . + βdXd + ε,
+ε ∼N(0, σ2)
+How do we estimate the MLR model parameters?
+The principle of Least Squares is exactly the same as before:
+▶Define the fitted values
+▶Find the best fitting plane by minimizing the sum of squared residuals.
+23
+
+===== PAGE 24 =====
+The Data and Least Squares
+Fitted Values:
+ˆYi = b0 + b1X1i + b2X2i . . . + bdXdi.
+Residuals:
+ei = Yi −ˆYi.
+Standard Error:
+s =
+sPn
+i=1 e2
+i
+n −p , where p = d + 1.
+Least Squares: Find b0, b1, b2, . . . , bd to minimize s2.
+24
+
+===== PAGE 25 =====
+The Data and Least Squares
+What are the LS coefficient values? Say that
+Y =
+
+
+Y1
+...
+Yn
+
+
+ˆX =
+
+
+1
+X11
+X12
+. . .
+X1d
+...
+1
+Xn1
+Xn2
+. . .
+Xnd
+
+
+Then the estimates are [b0 · · · bd]′ = b = (ˆX′ˆX)−1ˆX′Y.
+Same intuition as for SLR: b captures the covariance between Xj and Y (ˆX′Y),
+normalized by input sum of squares (ˆX′ˆX).
+25
+
+===== PAGE 26 =====
+Regression in Python
+You need only one command
+reg = smf.ols(y
+∼
+var1 + ...
++ varP, data=mydata).fit()
+ols stands for Ordinary Least Squares.
+y
+∼
+a + b is the ‘formula’ that defines your regression.
+The object reg is a list of useful things.
+reg.summary() prints a bunch of information.
+reg.params gives coefficients.
+reg.predict(mynewdata) predicts.
+mynewdata must be a data frame with exactly the same
+format as mydata (same variable names, same factor levels).
+26
+
+===== PAGE 27 =====
+Example: Predicting Market Equity Premium
+We will focus on predicting market equity returns using a dataset of financial and
+macroeconomic indicators compiled by Welch and Goyal (2007).
+Data: 16 predictors and includes 74 annual observations, covering a period from 1948
+to 2021.
+The following link gives more details on this data set.
+Market Equity Premium Data Set
+27
+
+===== PAGE 28 =====
+Summary: Market Equity Premium
+> rest full = F1.columns[0:-1].tolist()
+> rest full = ’+’.join(rest full)
+> reg full = smf.ols(formula=’ret ∼
+{}’.format(rest full), data = F1).fit()
+> reg full.summary()
+28
+
+===== PAGE 29 =====
+Multiple vs Simple Linear Regression
+Basic concepts and techniques translate directly from SLR.
+▶Individual parameter inference and estimation is the same,
+conditional on the rest of the model.
+▶ANOVA is exactly the same, and the F-test still applies.
+▶Our diagnostics and transformations apply directly.
+The hardest part would be moving to matrix algebra to translate all of our equations.
+Luckily, Python does all that for you.
+29
+
+===== PAGE 30 =====
+Residual Standard Error
+First off, the calculation for s2 = var(e) is exactly the same:
+s2 =
+Pn
+i=1(Yi −ˆY )2
+n −p
+▶ˆYi = b0 + P bjXji and p = d + 1.
+▶The residual standard error is ˆσ = s =
+√
+s2.
+30
+
+===== PAGE 31 =====
+Residuals in MLR
+As in the SLR model, the residuals in multiple regression are purged of any relationship
+to the independent variables. We decompose Y into the part predicted by X and the
+part due to idiosyncratic error.
+Y = ˆY + e
+corr(Xj, e) = 0
+corr( ˆY , e) = 0
+31
+
+===== PAGE 32 =====
+Inference for Coefficients
+As before in SLR, the LS linear coefficients are random (different for each sample) and
+correlated with each other.
+The LS estimators are unbiased: E[bj] = βj for j = 0, . . . , d.
+In particular, the sampling distribution for b is a multivariate normal, with mean
+β = [β0 · · · βd]′ and covariance matrix Sb.
+b ∼N(β, Sb)
+32
+
+===== PAGE 33 =====
+Coefficient Covariance Matrix
+var(b) : the p × p covariance matrix for random vector b is
+Sb =
+
+
+var(b0)
+cov(b0, b1)
+cov(b1, b0)
+var(b1)
+...
+var(bd−1)
+cov(bd−1, bd)
+cov(bd, bd−1)
+var(bd)
+
+
+⇒Standard errors are the square root of the diagonal of Sb.
+The coefficient covariance matrix is “easy” to calculate:
+Sb = s2 
+ˆX′ˆX
+−1
+33
+
+===== PAGE 34 =====
+Coefficient Covariance Matrix
+You can get Covariance Matrix with cov params()
+> cov matrix = reg full.cov params()
+> cov matrix
+34
+
+===== PAGE 35 =====
+Inference for Individual Coefficients
+Intervals and t-statistics are exactly the same as in SLR.
+▶A (1 −α)100% C.I. for βj is bj ± tα/2,n−psbj.
+▶zbj = (bj −β0
+j )/sbj ∼tn−p(0, 1) is the number of standard errors between the LS
+estimate and the null value.
+Intervals and testing via bj & sbj are one-at-a-time procedures:
+▶You are evaluating the jth coefficient conditional on the other X’s being in the
+model, but regardless of the values you’ve estimated for the other b’s.
+35
+
+===== PAGE 36 =====
+R2 for multiple regression
+Recall that we already view R2 as a measure of “fit”:
+R2 = SSR
+SST =
+Pn
+i=1( ˆYi −¯Y )2
+Pn
+i=1(Yi −¯Y )2
+And the correlation interpretation remains:
+R2 = cor2( ˆY , Y ) = r 2
+ˆyy
+(rˆyy = rxy in SLR since cor(X, ˆY ) = 1.)
+36
+
+===== PAGE 37 =====
+Forecasting in MLR
+Prediction follows exactly the same methodology as in SLR.
+For new data xf = [X1,f · · · Xd,f ]′,
+▶E[Yf |xf ] = ˆYf = b0 + b1X1f + . . . bdXdf
+▶var[Yf |xf ] = var( ˆYf ) + var(ef ) = s2
+fit + s2 = s2
+pred.
+With ˆX our design matrix and ˆxf = [1, X1,f · · · Xd,f ]′
+s2
+fit = s2 ∗ˆx′
+f (ˆX′ˆX)−1ˆxf
+A (1 −α) level prediction interval is still ˆYf ± tα/2,n−pspred.
+37
+
+===== PAGE 38 =====
+Prediction in MLR
+> reg reduced = smf.ols(formula=’ret ∼
+infl + lty + tbl’, data=F1).fit()
+> Xnew = pd.DataFrame([[0.03,0.02, 0.01]], columns=[’infl’, ’lty’, ’tbl’])
+> reg_reduced.get_prediction(Xnew).summary_frame(alpha=0.05)
+> X = sm.add constant(X reduced)
+# add 1
+> Xf = np.array([1,0.03,0.02, 0.01]).T
+> y hat f = Xf @ reg reduced.params
+y hat f: 0.0918
+> n = len(X)
+> p = len(reg reduced.params)
+> s2 = reg reduced.scale
+> s2 fit = s2 * (Xf.T @ np.linalg.inv(X.T @ X) @ Xf)
+> s pred = np.sqrt(s2 + s2 fit)
+> t critical = t.ppf(1 - 0.05 / 2, df=reg reduced.df resid)
+> lower bound = y hat f - t critical * s pred
+> upper bound = y hat f + t critical * s pred
+Prediction Interval: [-0.2365, 0.4201]
+38
+
+===== PAGE 39 =====
+Multicollinearity
+Multicollinearity refers to strong linear dependence between some of the covariates in a
+multiple regression model.
+The usual marginal effect interpretation is lost:
+▶Change in one X variable leads to change in others.
+Coefficient standard errors will be large, such that multicollinearity leads to large
+uncertainty about bj’s.
+Regression coefficient estimates are unstable. Dropping or adding variables may cause
+significant changes in the rest coefficient estimates.
+39
+
+===== PAGE 40 =====
+Multicollinearity
+Suppose that you regress Y onto X1 and X2 = 10 ∗X1.
+Then E[Y ] = β0 + β1X1 + β2X2 = β0 + β1X1 + β2(10X1) and the marginal effect of
+X1 on Y is
+∂E[Y |X1, X2]
+∂X1
+= β1 + 10β2
+X1 and X2 do not act independently!
+40
+
+===== PAGE 41 =====
+Multicollinearity
+Let’s consider 3 of our covariates:
+▶infl: Inflation
+▶lty: Long Term Yield
+▶tbl: Tresuary Bill
+Sure enough, they are all correlated with each other.
+41
+
+===== PAGE 42 =====
+Multicollinearity
+In the 3 covariate regression, none of the effects are significant:
+> reg reduced = smf.ols(formula=’ret ∼
+infl + lty + tbl’, data=F1).fit()
+> reg reduced.summary()
+But the F-stat is significant with p-value = 0.005!
+42
+
+===== PAGE 43 =====
+Multicollinearity
+If you look at individual regression effects, all 3 are significant:
+43
+
+===== PAGE 44 =====
+Multicollinearity
+Multicollinearity is not a big problem in and of itself, you just need to know that it is
+there.
+▶Fitting could remain good.
+▶No effect on prediction.
+If you recognize multicollinearity:
+▶Understand that the βj are not true marginal effects.
+▶Consider dropping variables to get a more simple model (use the partial F-test!).
+▶Expect to see big standard errors on your coefficients (i.e., your coefficient
+estimates are unstable).
+44
+
+===== PAGE 45 =====
+Categorical Effects and Dummy Variables
+Regression for Y onto a categorical X that takes R different levels:
+E[Y | X = 0] = β0;
+E[Y | X = r] = β0 + βr, for r = 1, . . . , R −1
+To represent these qualitative factors in multiple regression, we use dummy, binary, or
+indicator variables.
+Dummy variables allow the mean (intercept) to shift by taking on the value 0 or 1.
+If a factor X takes R possible levels, we can represent X through R −1 dummy
+variables
+E[Y |X] = β0 + β11[X=1] + β21[X=2] . . . + βR−11[X=R−1]
+(1[X=r] = 1 if X = r, 0 if X̸ = r.) What is E[Y |X] if X = 1?
+45
+
+===== PAGE 46 =====
+Orange Juice
+Three brands (b) Tropicana,
+Minute Maid, Dominicks
+83 Chicagoland Stores
+Demographic info for each
+Price, sales (log of # units sold),
+and whether advertised (feat)
+data in oj.csv
+bayesm & Montgomery, 1987
+46
+
+===== PAGE 47 =====
+The Juice: price, brand, and sales
+tropicana
+minute.maid
+dominicks
+brand
+0.5
+0.0
+0.5
+1.0
+log price
+Conditional Bar plots for log price
+feat
+0
+1
+0.5
+0.0
+0.5
+1.0
+log price
+4
+6
+8
+10
+12
+log sales
+Scatter plot for log price vs log sales
+brand
+tropicana
+minute.maid
+dominicks
+Each brand occupies a well defined price range. Sales decrease with price.
+47
+
+===== PAGE 48 =====
+Thinking About Scale
+When making a linear point (this goes up, that goes down) think about the scale on
+which you expect to find linearity.
+If your scatterplots look like the left panel, consider using log. Outliers?
+48
+
+===== PAGE 49 =====
+Log Linear
+We often model the mean for log(y) instead of y.
+Why? Multiplicative (rather than additive) change.
+log(y) = log(a) + xβ ⇔y = aexβ.
+Predicted y is multiplied by eβ after a unit increase in x.
+Recall that log(y) = z ⇔ez = y where e ≈2.7
+log(ab) = log(a) + log(b) and log(ab) = b log(a).
+I use log=ln, natural log. Anything else will be noted, e.g., log2.
+Whenever y changes on a percentage scale, use log(y).
+prices: “... Foreclosed homes sell at a 20% to 30% discount”
+sales: “... our y.o.y. sales are up 20% across models”
+49
+
+===== PAGE 50 =====
+Price Elasticity
+A simple orange juice ‘elasticity model’ for sales y has
+E[log y] = γ log(price) + x′β
+Elasticities and log-log regression: for small values we can interpret γ as % change in y
+per 1% increase in price.
+We run this in Python:
+smf.ols(formula=’log_sales
+∼
+log_price+brand’,data=oj).fit()
+(Intercept) log(price) branBDinute.maid brandtropicana
+10.8288
+-3.1387
+0.8702
+1.5299
+and see sales drop by about 3.1% for every 1% price hike.
+50
+
+===== PAGE 51 =====
+The Design Matrix
+What happened to branddominicks?
+Our regression formulas look like β0 + β1x1 + β2x2...
+But brand is not a number, so you can’t do brand×β.
+The first step is to create a numeric design matrix.
+It does this with a call to the dmatrix function:
+The dummy variable is on the left, and on the right we have numeric x that we can
+multiply against β coefficients.
+51
+
+===== PAGE 52 =====
+Intercepts
+The OJ used dmatrix to build this 4 column design:
+dmatrix(’ ~ log_price + brand’, data = oj)
+Intercept
+branBDinute.maid
+brandtropicana
+log(price)
+1.00000
+0.000000
+1.000000
+1.160021
+1.00000
+1.000000
+0.000000
+1.026042
+1.00000
+0.000000
+0.000000
+0.329304
+1.00000
+0.000000
+1.000000
+1.078410
+1.00000
+1.000000
+0.000000
+0.524729
+Each factor’s reference level is absorbed by the intercept. Coefficients are ‘change
+relative to reference’ (dominicks here).
+Why not include all three dummies?
+52
+
+===== PAGE 53 =====
+Interaction
+Beyond additive effects:
+variables change how others act on y.
+An interaction term is the product of two covariates,
+E[ y | x ] = . . . + βjxj + xjxkβjk
+so that the effect on E[y | x] of a unit increase in xj is βj + xkβjk. It depends upon xk!
+Interactions play a massive role in statistical learning, and they are often central to
+social science and business questions.
+▶Does gender change the effect of education on wages?
+▶Do patients recover faster when taking drug A?
+▶How does advertisement affect price sensitivity?
+53
+
+===== PAGE 54 =====
+Fitting interactions in Python: use * in your formula.
+reg interact = smf.ols(formula=’log sales ∼
+log price * brand’, data=oj).fit()
+Coefficients:
+(Intercept)
+log(price)
+10.95468
+-3.37753
+branBDinute.maid
+brandtropicana
+0.88825
+0.96239
+log(price):branBDinute.maid log(price):brandtropicana
+0.05679
+0.66576
+This is the model E[log(v)] = αb + βb log(price): a separate intercept and slope for
+each brand ‘b’.
+Why not separately estimate three models?
+Elasticities are dominicks: -3.4, minute maid: -3.3, tropicana: -2.7.
+Where do these numbers come from? Do they make sense?
+54
+
+===== PAGE 55 =====
+Advertisements
+A key question: what changes when we feature a brand?
+Here, this means in-store display promo or flier ad.
+You could model the additive effect on log sales volume
+E[log(v)] = αb + 1[feat]αfeat + βb log(p)
+Or this and its effect on elasticity
+E[log(v)] = αb + βb log(p) + 1[feat] (αfeat + βfeat log(p))
+Or its brand-specific effect on elasticity
+E[log(v)] = αb + βb log(p) + 1[feat] (αb,feat + βb,feat log(p))
+See the Python code for runs of all three models.
+Connect the regression formula and output to these equations.
+55
+
+===== PAGE 56 =====
+Brand-specific Elasticities
+Dominicks
+Minute Maid
+Tropicana
+Not Featured
+-2.8
+-2.0
+-2.0
+Featured
+-3.2
+-3.6
+-3.5
+Ads always decrease elasticity.
+Minute Maid and Tropicana elasticities drop 1.5% with ads,
+moving them from less to more price sensitive than Dominicks.
+Why does marketing increase price sensitivity?
+And how does this influence pricing/marketing strategy?
+56
+
+===== PAGE 57 =====
+Confounding
+Before including feat, Minute Maid behaved like Dominicks. With feat, Minute Maid
+looks more like Tropicana. Why?
+Because Minute Maid was more heavily promoted, and promotions have a negative
+effect on elasticity, we were confounding the two effects in the brand average elasticity.
+57
+
+===== PAGE 58 =====
+Fit Plot: ˆy vs y
+4
+6
+8
+10
+12
+log sales
+8
+9
+10
+11
+12
+13
+predicted sales
+fit plot for OJ linear regression
+brand
+tropicana
+minute.maid
+dominicks
+It’s good practice to plot ˆy vs y as a check for misspecification. (e.g., non-constant
+variance, nonlinearity in residuals, ...)
+58

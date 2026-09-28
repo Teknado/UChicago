@@ -1,0 +1,1590 @@
+
+===== PAGE 1 =====
+BUSN 41210: Financial Analytics
+Lecture 8: Trees, Random Forests, and Boosted Trees
+Dacheng Xiu
+Chicago Booth
+September 23, 2026
+© 2026 Dacheng Xiu, Chicago Booth Restricted Materials. All Rights Reserved.
+1 / 58
+
+===== PAGE 2 =====
+Trees
+Part I — one tree
+▶Classification And Regression Trees: using tree-logic to make predictions
+▶Growing a tree: deviance, impurity, and the greedy split
+▶Pruning: cost complexity, and choosing α out of sample
+▶Nonlinearity and interaction, for free
+Part II — many trees
+▶Bagging, and the one extra trick that makes it a random forest
+▶Boosting: fit the residual, shrink, repeat
+▶Which model actually wins, and opening the black box
+2 / 58
+
+===== PAGE 3 =====
+What is a Decision Tree?
+Sunny
+Cloudy
+Wake Up
+>70% Rain
+<70% Rain
+<30% Rain
+>30% Rain
+No Umbrella
+Umbrella
+Umbrella
+No Umbrella
+Tree-logic uses a series of steps to come to a conclusion.
+The trick is to have mini-decisions combine for good choices.
+Each decision is a node, and the final prediction is a leaf node
+3 / 58
+
+===== PAGE 4 =====
+Decision Trees are Like a Game of Mousetrap
+You drop your x covariates in at the top, and each decision node bounces you either left or
+right. Finally, you end up in a leaf node which contains the data subset defined by these
+decisions (splits).
+xi = 0
+↙
+↘
+xj = 2
+{x : xi > 0}
+↙
+↘
+{x : xi ≤0, xj ≤2}
+{x : xi ≤0, xj > 2}
+4 / 58
+
+===== PAGE 5 =====
+Tree-based Statistical Learning
+Tree-based learning: predicting outcome y from predictors x = (x1, ..., xp)
+′ by dividing up the
+feature space into small regions where the outcomes are more similar.
+Within each region, a very simple model is fit locally.
+This works both when y is categorical and continuous, i.e., both for classification and regression
+Regions can be achieved by making successive binary splits on the predictors variables x1, ..., xp,
+i.e. we choose a variable xj, j = 1, ...p, divide up the feature space according to
+xj ≤c
+and
+xj > c
+Then we repeat the same on each half.
+5 / 58
+
+===== PAGE 6 =====
+Estimation of Decision Trees
+As usual, we’ll maximize data likelihood (minimize deviance).
+But what are the observation probabilities in a tree model?
+Two types of likelihood:
+classification and regression trees.
+A given covariate x dictates your path through tree nodes, leading to a leaf node at the
+end.
+Classification trees have class probabilities at the leaves.
+Probability I’ll be in heavy rain is 0.9 (so take an umbrella).
+Regression trees have a mean response at the leaves.
+The expected amount of rain is 2in (so take an umbrella).
+6 / 58
+
+===== PAGE 7 =====
+Tree Deviances
+Regression Deviance: Pn
+i=1(yi −ˆyi)2
+Classification Deviance: −Pn
+i=1 log(ˆpyi), where ˆpyi = ˆp(yi|xi).
+It is also common to use Gini Deviance, −Pn
+i=1 ˆpyi(1 −ˆpyi), a measure of multinomial variance.
+Instead of being based on x′β, predicted ˆp and ˆy are functions of x passed through the
+decision nodes.
+We need a way to estimate the sequence of decisions.
+▶How many are they? What is the order?
+There is a huge set of possible tree configurations.
+7 / 58
+
+===== PAGE 8 =====
+Classification Trees
+Classification trees are popular because they are interpretable (they mimic how decisions are
+made).
+▶In classification, yi ∈1, ...K are the class labels, and xi ∈Rp measure the p predictor
+variables.
+▶The classification tree can be thought of as defining m regions (rectangles) R1, ...Rm, each
+corresponding to a leaf of the tree
+▶We assign each Rj a class label cj ∈1, ...K (typically the most dominant class within the
+region).
+▶We then classify a new point x as cj if it falls in region Rj .
+8 / 58
+
+===== PAGE 9 =====
+Classification Trees: An Illustration
+X1
+X2
+
+===== PAGE 10 =====
+Classification Trees: An Illustration
+X1
+X2
+X1 ≤c1?
+Yes
+No
+c1
+
+===== PAGE 11 =====
+Classification Trees: An Illustration
+X1
+X2
+c1
+c2
+X1 ≤c1?
+Yes
+X2 ≤c2?
+Yes
+No
+
+===== PAGE 12 =====
+Classification Trees: An Illustration
+X1
+X2
+c1
+c2
+c3
+X1 ≤c1?
+Yes
+X2 ≤c2?
+X2 ≤c3?
+Yes
+No
+No
+
+===== PAGE 13 =====
+Classification Trees: An Illustration
+X1
+X2
+c1
+c2
+c3
+c4
+X1 ≤c1?
+X1 ≤c4?
+Yes
+No
+X2 ≤c2?
+X2 ≤c3?
+Yes
+No
+No
+9 / 58
+
+===== PAGE 14 =====
+Toy Example: Classification Tree
+Example: n = 500 points in p = 2 dimensions, falling into classes 0 and 1, as marked by colors
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+X1
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+X2
+Does dividing up the feature space into rectangles look like it would work here?
+10 / 58
+
+===== PAGE 15 =====
+Toy Example: Classification Tree
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+X1
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+X2
+11 / 58
+
+===== PAGE 16 =====
+Example: Other Regions Not Allowed
+12 / 58
+
+===== PAGE 17 =====
+Predicted Class Probabilities
+With classification trees, we get not only the predicted classes for new points but also the
+predicted class probabilities.
+Note that each region Rj contains some subset of the training data (xi, yi), say, nj points.
+Further, for each class k = 1, ...K, we can estimate the probability that the class label is k
+given that the feature vector lies in region Rj
+ˆP(C = k|X ∈Rj) = #yi : yi ∈Rj
+and
+yi = k
+#yi : yi ∈Rj
+the proportion of points in the region that are of class k.
+The predicted class ˆcj is the most common occurring class among these points
+ˆcj = arg maxk=1,...K ˆP(C = k|X ∈Rj)
+13 / 58
+
+===== PAGE 18 =====
+Classification Trees and Their Competitors
+Model
+assumptions?
+Estimated
+probabilities?
+Interpretable?
+Flexible?
+LR
+Yes
+Yes
+Yes
+No
+k-NN
+No
+No
+No
+Yes
+Trees
+No
+Yes
+Yes
+Somewhat
+Predicts well?
+LR
+Depends on X
+k-NN
+If properly tuned
+Trees
+?
+14 / 58
+
+===== PAGE 19 =====
+Regression Trees
+Suppose that now we want to predict a continuous outcome instead of a class label.
+Essentially, everything follows as before, but now we just fit a mean of a continuous outcome
+rather than a proportion inside each rectangle
+15 / 58
+
+===== PAGE 20 =====
+Regression Trees
+The estimated regression function has the form
+E[y|x] =
+m
+X
+j=1
+cj · 1{x ∈Rj} = cj such that x ∈Rj,
+just as it did with classification. The quantities cj are no longer predicted classes, but instead
+they are real numbers.
+How would we choose cj? Just take the average response of all of the points in the region,
+cj = 1
+nj
+X
+xi∈Rj
+yi
+The main difference in building the tree is that we use sums of squares instead of
+misclassification error (or Gini index or deviance) to decide which region to split.
+16 / 58
+
+===== PAGE 21 =====
+How to Build Trees?
+There are two main issues to consider in building a tree:
+▶How to choose the splits?
+▶How big to grow the tree?
+Think first about varying the depth of the tree ... which is more complex, a big tree or a small
+tree? What tradeoff is at play here? How might we eventually consider choosing the depth?
+Now for a fixed depth, consider choosing the splits. If the tree has depth d, then it has about
+2d nodes. At each node we could choose any of p the variables for the split—this means that
+the number of possibilities is
+p · 2d
+This is huge even for moderate d! And we haven’t even counted the actual split points
+themselves
+17 / 58
+
+===== PAGE 22 =====
+CART
+We estimate decision trees by being recursive and greedy
+CART grows the tree through a sequence of splits:
+▶Given any set (node) of data, you can find the optimal split (the error minimizing split)
+and divide into two child sets.
+▶We then look at each child set, and again find the optimal split to divide it into two
+homogeneous subsets.
+▶The children become parents, and we look again for the optimal split on their new children
+(the grandchildren!).
+You stop splitting and growing when the size of the leaf nodes hits some minimum threshold
+(e.g., say no less than 10 obsv per leaf).
+Often there are also minimum deviance improvement thresholds.
+18 / 58
+
+===== PAGE 23 =====
+NBC Example
+Data from NBC on response to TV pilots. 6241 views and 20 questions for 40 shows. Primary
+goal is predicting engagement.
+Classic measures of broadcast marketability are Ratings.
+▶GRP: gross ratings points; estimated total viewership.
+Projected Engagement: a more subtle measure of audience. After watching a show, viewer is
+quized on order and detail. This measures their engagement with the show (and ads!).
+Viewer demographics: These demographics include percent of viewership for each show that
+falls in a number of categories defined by region, race, and how the household consumes TV.
+19 / 58
+
+===== PAGE 24 =====
+Use the DecisionTreeClassifier for CART in python
+from sklearn import tree
+clf = tree.DecisionTreeClassifier()
+clf = clf.fit(X, Y)
+As usual, you can plot, and predict the tree.
+Consider a classification tree to predict genre from demographics.
+X = demos.iloc[:,1:]
+y = nbc.Genre
+clf = tree.DecisionTreeClassifier()
+clf = clf.fit(X, Y)
+20 / 58
+
+===== PAGE 25 =====
+Trees are easiest to understand in a dendrogram
+Shows the sequence of internal splits, ending in leaf-node decisions.
+gini = 0.0
+samples = 3
+value = [0, 0, 3]
+gini = 0.0
+samples = 2
+value = [0, 2, 0]
+gini = 0.0
+samples = 16
+value = [16, 0, 0]
+gini = 0.0
+samples = 1
+value = [0, 0, 1]
+TERRITORY.PACIFIC <= 18.871
+gini = 0.48
+samples = 5
+value = [0, 2, 3]
+X2.PERSONS <= 28.802
+gini = 0.111
+samples = 17
+value = [16, 0, 1]
+gini = 0.0
+samples = 15
+value = [0, 15, 0]
+gini = 0.0
+samples = 3
+value = [3, 0, 0]
+VCR.OWNER <= 83.749
+gini = 0.43
+samples = 22
+value = [16, 2, 4]
+BLACK <= 17.202
+gini = 0.278
+samples = 18
+value = [3, 15, 0]
+WIRED.CABLE.W.O.PAY <= 28.665
+gini = 0.584
+samples = 40
+value = [19, 17, 4]
+To get the dendrogram, do tree.expor text(clf) then plot tree(clf).
+21 / 58
+
+===== PAGE 26 =====
+Consider predicting engagement from ratings and genre.
+Split on genre by turning it into a group of numeric variables:
+X = pd.concat([nbc.GRP,pd.get_dummies(nbc.Genre)], axis=1)
+A regression tree:
+X = pd.concat([nbc.GRP,pd.get_dummies(nbc.Genre)], axis=1)
+y = nbc.PE
+clf = tree.DecisionTreeRegressor().fit(X, y)
+Instead of genre, leaf predictions are expected engagement.
+22 / 58
+
+===== PAGE 27 =====
+An NBC Show Engagement Tree
+mse = 0.0
+samples = 1
+value = 81.662
+mse = 35.281
+samples = 5
+value = 56.959
+mse = 3.369
+samples = 3
+value = 84.174
+mse = 27.043
+samples = 19
+value = 78.007
+mse = 48.34
+samples = 3
+value = 63.13
+mse = 56.294
+samples = 8
+value = 73.354
+mse = 0.0
+samples = 1
+value = 30.0
+Reality <= 0.5
+mse = 114.16
+samples = 6
+value = 61.076
+Drama/Adventure <= 0.5
+mse = 28.295
+samples = 22
+value = 78.848
+GRP <= 433.85
+mse = 74.858
+samples = 11
+value = 70.565
+GRP <= 12.4
+mse = 216.103
+samples = 7
+value = 56.637
+Reality <= 0.5
+mse = 59.06
+samples = 33
+value = 76.087
+GRP <= 223.05
+mse = 141.161
+samples = 40
+value = 72.683
+0
+500
+1000
+1500
+2000
+2500
+GRP
+30
+40
+50
+60
+70
+80
+90
+PE
+Genre
+Reality
+Drama/Adventure
+Situation Comedy
+Nonlinear: PE increases with GRP, but in jumps
+Follow how the tree translates into changing E[PE]
+23 / 58
+
+===== PAGE 28 =====
+Trees provide Automatic Interaction Detection
+For example, different genres are more/less dependent on GRP.
+AID was an original motivation for building decision trees. Older algorithms have it in their
+name: CHAID, ...
+This is pretty powerful technology: nonlinearity and interaction without having to specify it
+in advance. Moreover, nonconstant variance is no problem.
+Methods with these characteristics are called nonparametric.
+No assumed parametric model (eg, y = xβ + ε, ε ∼N(0, σ2)).
+24 / 58
+
+===== PAGE 29 =====
+Pruning via Minimal Cost-complexity Algorithm
+Biggest challenge with such flexible models is avoiding overfit. For CART, the usual solution is
+to rely on out-of-sample prediction.
+The minimal cost-complexity pruning algorithm, like LASSO, is parametrized by a complexity
+parameter α.
+Rα(T) = R(T) + α|T|
+Pruning yields candidate trees, and we use a testing sample to choose.
+25 / 58
+
+===== PAGE 30 =====
+Example: Social Network Ads
+A categorical dataset to determine whether a user purchased a particular product. Gender, age
+and estimated salary are available to help in predicting purchase behavior. An overly complex
+tree fit to 400 clients:
+gini = 0.0
+samples = 1
+value = [1, 0]
+gini = 0.0
+samples = 1
+value = [0, 1]
+EstimatedSalary <= 74000.0
+gini = 0.5
+samples = 2
+value = [1, 1]
+gini = 0.0
+samples = 1
+value = [1, 0]
+gini = 0.0
+samples = 2
+value = [2, 0]
+gini = 0.0
+samples = 1
+value = [0, 1]
+Gender <= 0.5
+gini = 0.444
+samples = 3
+value = [2, 1]
+gini = 0.0
+samples = 3
+value = [3, 0]
+gini = 0.0
+samples = 1
+value = [1, 0]
+gini = 0.0
+samples = 1
+value = [0, 1]
+Age <= 39.5
+gini = 0.444
+samples = 3
+value = [2, 1]
+Age <= 39.5
+gini = 0.278
+samples = 6
+value = [5, 1]
+gini = 0.0
+samples = 2
+value = [0, 2]
+gini = 0.0
+samples = 2
+value = [2, 0]
+EstimatedSalary <= 112500.0
+gini = 0.5
+samples = 2
+value = [1, 1]
+gini = 0.0
+samples = 1
+value = [0, 1]
+gini = 0.0
+samples = 7
+value = [7, 0]
+EstimatedSalary <= 71500.0
+gini = 0.346
+samples = 9
+value = [7, 2]
+EstimatedSalary <= 79500.0
+gini = 0.5
+samples = 4
+value = [2, 2]
+gini = 0.0
+samples = 3
+value = [3, 0]
+gini = 0.0
+samples = 1
+value = [0, 1]
+gini = 0.0
+samples = 1
+value = [1, 0]
+gini = 0.5
+samples = 2
+value = [1, 1]
+gini = 0.0
+samples = 1
+value = [1, 0]
+Gender <= 0.5
+gini = 0.444
+samples = 3
+value = [1, 2]
+gini = 0.0
+samples = 1
+value = [1, 0]
+gini = 0.0
+samples = 1
+value = [0, 1]
+gini = 0.0
+samples = 2
+value = [2, 0]
+Age <= 38.5
+gini = 0.219
+samples = 16
+value = [14, 2]
+Age <= 37.5
+gini = 0.408
+samples = 7
+value = [5, 2]
+gini = 0.0
+samples = 2
+value = [2, 0]
+Gender <= 0.5
+gini = 0.5
+samples = 2
+value = [1, 1]
+Age <= 32.5
+gini = 0.444
+samples = 3
+value = [2, 1]
+EstimatedSalary <= 114000.0
+gini = 0.5
+samples = 4
+value = [2, 2]
+EstimatedSalary <= 102000.0
+gini = 0.444
+samples = 3
+value = [2, 1]
+gini = 0.0
+samples = 3
+value = [0, 3]
+gini = 0.0
+samples = 1
+value = [0, 1]
+gini = 0.0
+samples = 1
+value = [1, 0]
+EstimatedSalary <= 77500.0
+gini = 0.287
+samples = 23
+value = [19, 4]
+gini = 0.0
+samples = 7
+value = [7, 0]
+gini = 0.0
+samples = 1
+value = [0, 1]
+EstimatedSalary <= 79500.0
+gini = 0.375
+samples = 4
+value = [3, 1]
+gini = 0.0
+samples = 1
+value = [1, 0]
+Age <= 33.5
+gini = 0.49
+samples = 7
+value = [4, 3]
+gini = 0.0
+samples = 1
+value = [1, 0]
+gini = 0.0
+samples = 2
+value = [0, 2]
+gini = 0.0
+samples = 1
+value = [0, 1]
+gini = 0.0
+samples = 1
+value = [1, 0]
+gini = 0.0
+samples = 5
+value = [0, 5]
+EstimatedSalary <= 136000.0
+gini = 0.444
+samples = 6
+value = [2, 4]
+EstimatedSalary <= 79500.0
+gini = 0.5
+samples = 2
+value = [1, 1]
+gini = 0.0
+samples = 1
+value = [0, 1]
+gini = 0.0
+samples = 1
+value = [0, 1]
+gini = 0.0
+samples = 1
+value = [1, 0]
+Age <= 40.5
+gini = 0.231
+samples = 30
+value = [26, 4]
+EstimatedSalary <= 74000.0
+gini = 0.48
+samples = 5
+value = [3, 2]
+EstimatedSalary <= 110000.0
+gini = 0.469
+samples = 8
+value = [5, 3]
+gini = 0.0
+samples = 1
+value = [0, 1]
+gini = 0.0
+samples = 1
+value = [1, 0]
+EstimatedSalary <= 69000.0
+gini = 0.444
+samples = 3
+value = [1, 2]
+gini = 0.0
+samples = 1
+value = [1, 0]
+gini = 0.0
+samples = 1
+value = [0, 1]
+gini = 0.0
+samples = 13
+value = [0, 13]
+Gender <= 0.5
+gini = 0.5
+samples = 2
+value = [1, 1]
+gini = 0.0
+samples = 2
+value = [2, 0]
+Age <= 50.5
+gini = 0.298
+samples = 11
+value = [2, 9]
+Age <= 59.5
+gini = 0.444
+samples = 3
+value = [1, 2]
+gini = 0.0
+samples = 5
+value = [0, 5]
+Age <= 39.5
+gini = 0.5
+samples = 2
+value = [1, 1]
+Age <= 41.5
+gini = 0.284
+samples = 35
+value = [29, 6]
+Age <= 40.0
+gini = 0.494
+samples = 9
+value = [5, 4]
+gini = 0.0
+samples = 2
+value = [0, 2]
+gini = 0.0
+samples = 1
+value = [1, 0]
+gini = 0.0
+samples = 2
+value = [0, 2]
+gini = 0.0
+samples = 3
+value = [3, 0]
+Age <= 45.5
+gini = 0.5
+samples = 4
+value = [2, 2]
+gini = 0.0
+samples = 1
+value = [1, 0]
+gini = 0.0
+samples = 1
+value = [0, 1]
+EstimatedSalary <= 44500.0
+gini = 0.5
+samples = 2
+value = [1, 1]
+gini = 0.0
+samples = 3
+value = [0, 3]
+EstimatedSalary <= 139500.0
+gini = 0.124
+samples = 15
+value = [1, 14]
+EstimatedSalary <= 80000.0
+gini = 0.426
+samples = 13
+value = [4, 9]
+gini = 0.0
+samples = 18
+value = [0, 18]
+EstimatedSalary <= 85500.0
+gini = 0.219
+samples = 8
+value = [1, 7]
+gini = 0.0
+samples = 40
+value = [40, 0]
+EstimatedSalary <= 70500.0
+gini = 0.307
+samples = 37
+value = [30, 7]
+gini = 0.0
+samples = 2
+value = [2, 0]
+EstimatedSalary <= 117500.0
+gini = 0.496
+samples = 11
+value = [5, 6]
+gini = 0.0
+samples = 2
+value = [0, 2]
+gini = 0.0
+samples = 1
+value = [1, 0]
+EstimatedSalary <= 40000.0
+gini = 0.444
+samples = 3
+value = [1, 2]
+Gender <= 0.5
+gini = 0.408
+samples = 7
+value = [5, 2]
+gini = 0.0
+samples = 4
+value = [0, 4]
+EstimatedSalary <= 136000.0
+gini = 0.5
+samples = 2
+value = [1, 1]
+gini = 0.0
+samples = 3
+value = [3, 0]
+Age <= 59.5
+gini = 0.32
+samples = 5
+value = [1, 4]
+Age <= 48.5
+gini = 0.293
+samples = 28
+value = [5, 23]
+Age <= 58.5
+gini = 0.074
+samples = 26
+value = [1, 25]
+EstimatedSalary <= 67500.0
+gini = 0.165
+samples = 77
+value = [70, 7]
+gini = 0.0
+samples = 2
+value = [0, 2]
+gini = 0.0
+samples = 11
+value = [0, 11]
+Age <= 30.5
+gini = 0.497
+samples = 13
+value = [7, 6]
+Age <= 45.5
+gini = 0.444
+samples = 3
+value = [1, 2]
+gini = 0.0
+samples = 5
+value = [0, 5]
+EstimatedSalary <= 52000.0
+gini = 0.48
+samples = 10
+value = [6, 4]
+EstimatedSalary <= 132000.0
+gini = 0.278
+samples = 6
+value = [1, 5]
+Age <= 54.0
+gini = 0.5
+samples = 8
+value = [4, 4]
+Age <= 52.5
+gini = 0.198
+samples = 54
+value = [6, 48]
+gini = 0.0
+samples = 162
+value = [162, 0]
+EstimatedSalary <= 83500.0
+gini = 0.202
+samples = 79
+value = [70, 9]
+EstimatedSalary <= 107500.0
+gini = 0.413
+samples = 24
+value = [7, 17]
+gini = 0.0
+samples = 20
+value = [0, 20]
+EstimatedSalary <= 22500.0
+gini = 0.219
+samples = 8
+value = [1, 7]
+EstimatedSalary <= 104000.0
+gini = 0.492
+samples = 16
+value = [7, 9]
+gini = 0.0
+samples = 29
+value = [0, 29]
+EstimatedSalary <= 48000.0
+gini = 0.271
+samples = 62
+value = [10, 52]
+Age <= 36.5
+gini = 0.072
+samples = 241
+value = [232, 9]
+EstimatedSalary <= 119000.0
+gini = 0.268
+samples = 44
+value = [7, 37]
+EstimatedSalary <= 35500.0
+gini = 0.444
+samples = 24
+value = [8, 16]
+EstimatedSalary <= 41500.0
+gini = 0.196
+samples = 91
+value = [10, 81]
+EstimatedSalary <= 90500.0
+gini = 0.271
+samples = 285
+value = [239, 46]
+Age <= 46.5
+gini = 0.264
+samples = 115
+value = [18, 97]
+Age <= 42.5
+gini = 0.459
+samples = 400
+value = [257, 143]
+Do we need all the splits? Is the tree just fitting noise?
+26 / 58
+
+===== PAGE 31 =====
+Complexity as a Function of Tuning Parameter
+0.00
+0.05
+0.10
+0.15
+alpha
+0
+20
+40
+60
+80
+number of nodes
+Number of nodes vs alpha
+0.00
+0.05
+0.10
+0.15
+alpha
+0
+2
+4
+6
+8
+10
+12
+depth of tree
+Depth vs alpha
+27 / 58
+
+===== PAGE 32 =====
+Out-of-sample Tree Pruning Accuracy
+0.00
+0.05
+0.10
+0.15
+alpha
+0.7
+0.8
+0.9
+1.0
+accuracy
+Accuracy vs alpha for training and testing sets
+train
+test
+28 / 58
+
+===== PAGE 33 =====
+We thus fit a tree with depth 2:
+clf = tree.DecisionTreeClassifier(max leaf nodes=3).fit(X, Y)
+gini = 0.072
+samples = 241
+value = [232, 9]
+gini = 0.268
+samples = 44
+value = [7, 37]
+EstimatedSalary <= 90500.0
+gini = 0.271
+samples = 285
+value = [239, 46]
+gini = 0.264
+samples = 115
+value = [18, 97]
+Age <= 42.5
+gini = 0.459
+samples = 400
+value = [257, 143]
+CV chooses age and estimated salary as deciding variables.
+29 / 58
+
+===== PAGE 34 =====
+Social Network Ads Tree
+With only 2 relevant inputs, we can plot the data and tree fit.
+30 / 58
+
+===== PAGE 35 =====
+Trees Detect Nonlinearity
+They automatically learn non-linear response functions and will discover interactions between
+variables.
+Example: Motorcycle Crash Test Dummy Data
+x is time from impact, y is acceleration on the helmet.
+0
+10
+20
+30
+40
+50
+60
+times
+100
+50
+0
+50
+accels
+31 / 58
+
+===== PAGE 36 =====
+Example: California Housing Data
+Median home values in 20,640 census tracts, along with
+▶Latitude and longitude of tract centers.
+▶Population totals, household counts, and median income.
+▶Average room/bedroom numbers, home age.
+The goal is to predict log(MedVal) for a census tract.
+Difficult regression: covariate effects change with location, and how they change is certainly
+not linear.
+32 / 58
+
+===== PAGE 37 =====
+Trees Detect Interaction Automatically
+−124
+−121
+−118
+−115
+longitude
+34
+36
+38
+40
+42
+latitude
+the data: log (MedVal)
+−124
+−121
+−118
+−115
+longitude
+34
+36
+38
+40
+latitude
+a depth-6 tree, 64 leaves
+11.0
+11.5
+12.0
+12.5
+13.0
+Give a tree longitude and latitude only — nothing else, and no instruction that the two interact.
+Five-fold out-of-sample R2: depth-6 tree 0.5580, standardized LASSO 0.3164.
+A plane in (lat, long) is not a map of California. The tree finds the interaction because recursive
+splitting is interaction.
+33 / 58
+
+===== PAGE 38 =====
+How Big Should the Tree Be?
+10−6
+10−5
+10−4
+10−3
+10−2
+10−1
+α
+100
+101
+102
+103
+104
+leaves |Tα|
+the path: 18,660 distinct α
+100
+101
+102
+103
+104
+leaves
+0.2
+0.4
+0.6
+5-fold OOS R2
+12 leaves: R2 = 0.561
+CV: 211 leaves, R2 = 0.722
+and what it costs out of sample
+Grown out, the tree has 19,826 leaves for 20,640 tracts: it interpolates, in-sample R2 = 1.0000. The
+cost-complexity path visits 18,660 distinct values of α.
+α
+0
+10−4
+3×10−4
+10−3
+3×10−3
+10−2
+10−1
+leaves
+19,826
+211
+81
+31
+13
+4
+1
+OOS R2
+0.6352
+0.7220
+0.6985
+0.6334
+0.5571
+0.4318
+0.1124
+34 / 58
+
+===== PAGE 39 =====
+What the Path Is Telling You
+▶Cross-validation picks α = 10−4: 211 leaves, out-of-sample R2 = 0.7220. Not the biggest
+tree, and not a small one either.
+▶A twelve-leaf tree — the size you can actually read off a slide — scores 0.5610. That is a
+legible tree. It is also 0.16 of R2 worse than the tree cross-validation wants.
+▶The readable tree and the accurate tree are not the same tree. You cannot have
+both, and which one you want depends on whether the deliverable is a forecast or an
+explanation.
+▶And note what the left panel says about tuning: leaves fall roughly log-linearly in α, so a
+coarse geometric grid is enough. You do not need to visit all 18,660 knots.
+35 / 58
+
+===== PAGE 40 =====
+The Problem Is Not Bias. It Is Variance.
+Cross-validated pruning gave us a 211-leaf tree with out-of-sample R2 = 0.7220. That is the
+best single tree there is, and it is still not good enough.
+▶A deep tree can approximate almost any function — grown out, ours interpolated all
+20,640 tracts.
+▶What it cannot do is give you the same function twice. The greedy first split is a choice
+between close competitors; if a resample flips it, every split below it changes.
+▶Prediction error decomposes as (bias)2 + variance + noise, and for a deep tree the middle
+term dominates.
+Cross-validation picks the depth that minimizes average out-of-sample error. It does nothing
+about the dispersion at that depth — and with one history you only get one draw.
+36 / 58
+
+===== PAGE 41 =====
+Unfortunately, it is tough to avoid overfit with CART:
+Deep tree structure is so unstable that optimal depth is not easily chosen via cross validation,
+and there’s no theory to fall back on.
+Instead, we can average over a bootstrapped sample of trees:
+▶repeatedly re-sample the data, with-replacement, to get a ‘jittered’ dataset of n
+observations.
+▶for each resample, fit a CART tree.
+▶when you want to predict y for some x, take the average prediction from this forest of
+trees.
+Real structure that persists across datasets shows up in the average. Noisy useless signals will
+average out to have no effect.
+This is a Random Forest
+37 / 58
+
+===== PAGE 42 =====
+Random Forests
+Algorithm Sketch:
+1. Sample B subsets of the data + variables: e.g., observations 1, 5, 20, ... and inputs
+2, 10, 17, ...
+2. Fit a tree to each subset, to get B fitted trees is Tb. At each split, sample a subset of
+candidate variables for splitting
+3. Average prediction across trees:
+▶for regression average E[y|x] = 1
+B
+PB
+b=1 Tb(x).
+▶for classification let {Tb(x)}B
+b=1 vote on ˆy.
+The observation resample is usually with-replacement, so that this is taking the average of
+bootstrapped trees (i.e., ‘bagging’)
+38 / 58
+
+===== PAGE 43 =====
+Step 2 Is the Whole Difference
+Drop step 2 and you have bagging: bootstrap, fit, average. Keep it and you have a random
+forest. The gap between them is worth understanding.
+▶Bagged trees are correlated. They all see nearly the same data, so they all find nearly
+the same strong first split. Averaging B estimators cuts variance by about B only if they
+are independent; averaging correlated things buys much less.
+▶Starving each split of columns decorrelates them. Offer only a random subset of
+predictors at every split — √p for classification, p/3 or p for regression — and the trees
+are forced to disagree.
+▶The price is a little bias per tree. Sometimes the best split really was the one you hid.
+That is a good trade: bias is small and shared, variance is large and cancels.
+39 / 58
+
+===== PAGE 44 =====
+Understanding Random Forests
+Recall how CART is used in practice.
+▶Split to lower deviance until leaves hit minimum size.
+▶Create a set of candidate trees by pruning back from this.
+▶Choose the best among those trees by cross validation.
+Random Forests avoid the need for CV.
+Each tree ‘b’ is not overly complicated because you only work with a limited set of variables.
+Your predictions are not ‘optimized to noise’ because they are averages of trees fit to many
+different subsets.
+Each tree is grown deep and not pruned — the averaging does the regularizing. In practice you
+set B as large as your patience allows, set a minimum leaf size, and stop.
+40 / 58
+
+===== PAGE 45 =====
+What Averaging Actually Buys
+100
+101
+102
+B, number of trees averaged
+0.70
+0.75
+0.80
+0.85
+held-out R2
+±1 sd of single trees
+forest: average of B trees
+one CV-pruned CART
+California panel, 70/30 split (14,447 fit, 6,193 held out) — a cross-section, so a random split is legitimate.
+▶one tree R2 = 0.6875 →ten 0.8084 →fifty 0.8225 →three hundred 0.8268
+▶the CV-pruned single CART on the same split: 0.7341. Averaging buys +0.0926.
+▶the 300 individual trees have held-out R2 with sd 0.0148 about their mean — and each is a legitimate
+CART fit.
+Flat after about fifty trees: B is a budget, not a tuning parameter.
+41 / 58
+
+===== PAGE 46 =====
+Model Averaging
+This technique of ‘Model Averaging’ is central to many advanced nonparametric learning
+algorithms.
+ensemble learning, mixture of experts, Bayesian averages, ...
+It works best with flexible but simple models
+Recall lasso as a stabilized version of stepwise regression (if you jitter the data your estimates
+stay pretty constant).
+Model averaging is a way to take arbitrary unstable methods, and make them stable. This
+makes training easier.
+Probability of rain on a new day is the average P(rain) across some trees that split on forecast,
+others on sky. We don’t get tied to one way of deciding about umbrellas.
+42 / 58
+
+===== PAGE 47 =====
+Random Forests in python
+Python has the RandomForestRegressor and RandomForestClassifier in sklearn, which
+work essentially the same as tree.
+rf = RandomForestRegressor(n_estimators=300).fit(X, y)
+Unfortunately, you lose the interpretability of a single tree. You have traded one readable rule
+set for three hundred of them.
+One warning about feature importances , because the name invites the wrong reading. It is
+the in-sample mean decrease in impurity, summed over splits and normalized. It is not an
+out-of-sample statistic. If you want importance measured out of sample, permute — we do
+that at the end of the lecture, and the two rankings disagree.
+43 / 58
+
+===== PAGE 48 =====
+Random Trees for the Motorcycle Data
+0
+10
+20
+30
+40
+50
+60
+times
+100
+50
+0
+50
+accels
+If you fit to random subsets of the data, you get a slightly different tree each time.
+44 / 58
+
+===== PAGE 49 =====
+Model Averaging with Random Forests
+0
+10
+20
+30
+40
+50
+60
+times
+100
+50
+0
+50
+accels
+Averaging many trees yields a single response surface.
+45 / 58
+
+===== PAGE 50 =====
+Ensemble Learning with Boosted Trees
+“Boosting”: Ensemble method for aggregating many individual “weak learners” (models that don’t
+forecast well) into a single “strong learner”. Cf. Schapire (1990, ML)
+Algorithm Sketch:
+▶Fix tree-depth L (shallow!, e.g. L = 1)
+1. Fit 1st simple tree
+▶Forces trees to be weak learners with large bias
+2. Fit 2nd shallow tree to residuals from the first tree
+▶Forecasts from the two trees are summed to form the ensemble prediction
+▶Shrink the forecast component from the 2nd tree by a factor ν ∈(0, 1)
+▶Helps prevent the model from overfitting the residuals
+▶Iterate until there are a total of B trees in the ensemble
+L, ν, and B are tuning parameters selected via validation.
+46 / 58
+
+===== PAGE 51 =====
+Bagging and Boosting Are Opposites
+Bagging / random forest
+Boosting
+Trees are fit in parallel, each to a
+resample of the same data.
+Trees are fit in sequence, each to what
+the previous ones got wrong.
+Trees are deep:
+low bias, high
+variance. Averaging kills the vari-
+ance.
+Trees are shallow: high bias, low vari-
+ance. Adding kills the bias.
+Trees should be as independent
+as possible — hence column sub-
+sampling.
+Trees are deliberately dependent —
+tree b exists only because of trees 1..b−
+1.
+More trees never hurt. B is a bud-
+get.
+More trees eventually hurt. B is a tuning
+parameter.
+Same ingredient, opposite recipe. That last row is why boosting needs more care than a forest
+— and why it wins when you give it that care.
+47 / 58
+
+===== PAGE 52 =====
+Shrinkage, Rounds, and When to Stop
+101
+102
+103
+boosting rounds B   (log scale)
+0.6
+0.7
+0.8
+0.9
+held-out R2
+ one CART
+ν = 0.5
+ν = 0.1
+ν = 0.05
+ν = 0.01
+Held-out R2 against rounds; California panel, depth-4 trees, subsample 0.8:
+▶ν = 0.5: peaks at 125 rounds, 0.8262, then decays to 0.8045 by 4,000. Big steps overfit the residual.
+▶ν = 0.1: peaks at 2,803, 0.8586.
+ν = 0.05: 0.8632, still creeping up at 4,000.
+ν = 0.01: 0.8533, not
+converged.
+Halve the learning rate and you need roughly twice the rounds. Pick ν small enough to be safe, then let the
+held-out curve tell you B.
+48 / 58
+
+===== PAGE 53 =====
+Back to California Housing
+Same 20,640 census tracts as Part I, same nine predictors, same target log(MedVal).
+Five models, all scored on the same 5-fold split, against the same training-fold mean:
+▶standardized LASSO — the linear benchmark
+▶cross-validated CART — one tree, 211 leaves
+▶GradientBoostingRegressor(100) — boosting straight out of the box
+▶RandomForestRegressor(300) — the forest
+▶boosting with ν and B chosen on held-out data
+The comparison is only meaningful because the split is shared. Two numbers computed on two
+different splits are two different questions.
+49 / 58
+
+===== PAGE 54 =====
+CA Housing: Out-of-Sample Prediction
+LASSO
+CART
+GBRT
+(default)
+Random
+Forest
+GBRT
+(tuned)
+0.0
+0.2
+0.4
+0.6
+0.8
+5-fold OOS R2
+0.6415
+0.7220
+0.7997
+0.8327
+0.8600
+▶One tree beats the linear model: 0.7220 against 0.6415. The gap is nonlinearity plus interaction — the
+geographic map of Part I, in a number.
+▶Averaging beats one tree: 0.8327 against 0.7220, for almost no tuning.
+▶Boosting out of the box loses to the forest, 0.7997. One hundred rounds at the default rate is not enough.
+▶Boosting tuned wins, 0.8600 — bought with 3,998 rounds and a held-out search, where the forest cost
+one line.
+50 / 58
+
+===== PAGE 55 =====
+The Honest Version of “Boosting Wins”
+Boosted trees are the standard workhorse on tabular data, and that reputation is earned. But
+state it precisely:
+▶A random forest is nearly tuning-free. Set B large, set a minimum leaf size, walk away. On
+this panel that gets you 0.8327.
+▶Boosting is not. With ν, B, depth and subsampling all live, the out-of-the-box call sits
+0.03 below the forest. The win of +0.027 is real, and it is bought with a validation budget.
+▶And a tuning budget is a leakage risk. Every round of the search looks at held-out data.
+Tune on a validation split, report on a test split you touched once.
+If you have a day, boost. If you have an hour, or a deadline, or a committee, the forest is the
+better answer and it is not close.
+51 / 58
+
+===== PAGE 56 =====
+Variable Importance
+The mean decrease in impurity (MDI) importance of a feature is computed as follows:
+1. For each tree in the forest:
+▶The decrease in variance for a feature used in a split is calculated every time that feature is
+used to split a node.
+▶The decrease is a measure of how much that split improves the homogeneity of the node,
+specifically, how much the impurity of the target variable is reduced as a result of the split.
+▶This decrease in impurity is averaged across all the splits in the tree that use the feature.
+2. For the entire forest:
+▶The average decrease in variance for each feature is then averaged across all the trees in the
+forest to give a final importance score for each feature.
+3. Normalization:
+▶The feature importance scores are then normalized so that they sum to 1.
+Note what this is not: every quantity above is computed on the rows the tree was fit to. MDI
+is an in-sample statistic.
+52 / 58
+
+===== PAGE 57 =====
+Permutation Variable Importance
+Permutation-based feature importance is model-agnostic and is often more reliable, especially
+in the presence of correlated features. This method involves the following steps:
+1. Train the model on the original dataset and compute the performance metric of interest
+on held-out data.
+2. For each feature:
+▶Shuffle the values of the feature across all samples, thereby breaking the relationship
+between the feature and the target.
+▶Recompute the performance metric of the model using this modified dataset.
+▶The importance of the feature is how much the metric decreases. A larger decrease indicates
+a more important feature.
+3. Repeat the shuffle several times and average, since a single permutation is itself a random
+draw.
+Permutation importance is more computationally intensive than MDI because it requires
+re-evaluating the model for each feature — and it is worth it, because it answers the question
+you actually asked.
+53 / 58
+
+===== PAGE 58 =====
+The Two Rankings Disagree
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+share of total importance
+population
+households
+AveBedrms
+AveRooms
+housingMedianAge
+AveOccupancy
+longitude
+latitude
+medianIncome
+MDI, in sample (normalised)
+permutation, held out (normalised)
+Same forest, same data; MDI in sample, permutation on the held-out third:
+▶Latitude: MDI third at 0.1177, permutation second at 0.6101. MDI splits the credit for location across
+two correlated columns and undercounts both.
+▶Population and households: real MDI mass (0.0185, 0.0201), worth essentially nothing out of sample
+(0.0015, 0.0035). MDI rewards a column for merely offering many places to split.
+54 / 58
+
+===== PAGE 59 =====
+Partial Dependence, Defined
+Take one variable xj and a value v. Set xj = v for every row, leave every other column as
+observed, predict, and average:
+¯fj(v) = 1
+n
+n
+X
+i=1
+ˆf
+ v, xi,−j
+
+.
+Repeat over a grid of v — forty points from the 5th to the 95th percentile of xj — and plot
+¯fj(v) against v. That is the whole method:
+def partial_dependence(model, X, feature, grid):
+out = []
+for v in grid:
+Xv = X.copy()
+Xv[feature] = v
+# every row gets x_j = v; the rest as observed
+out.append(model.predict(Xv).mean())
+return np.array(out)
+It averages over the other columns as observed, so it reports what the model says, not a causal effect.
+sklearn’s partial dependence defaults to a faster tree-walk approximation for forests; method=’brute’ is this
+definition exactly.
+55 / 58
+
+===== PAGE 60 =====
+Importance Says Which. Partial Dependence Says Which Way.
+2
+4
+6
+medianIncome
+11.8
+12.0
+12.2
+12.4
+12.6
+12.8
+partial dep., log (MedVal)
+0
+2
+4
+6
+AveOccupancy
+12.0
+12.1
+12.2
+12.3
+20
+40
+housingMedianAge
+12.04
+12.06
+12.08
+12.10
+12.12
+Each panel is ¯fj(v) from the previous slide, computed on the fitting sample with the seven-line function.
+▶medianIncome spans 1.01 in log MedVal — a factor of 2.7 in levels — and rises throughout. A sentence a
+committee can act on.
+▶AveOccupancy spans 0.39, steeply decreasing at the low end then nearly flat. One linear coefficient would
+average those two regimes into a misleading number.
+▶housingMedianAge spans 0.08: present, economically small.
+Importance is a magnitude with no sign. Partial dependence has the sign.
+56 / 58
+
+===== PAGE 61 =====
+Roundup on Tree-based Learning
+We have seen three techniques for building tree models.
+▶CART: recursive partitions, pruned back by CV.
+Readable. Unstable. On the California panel, R2 = 0.7220.
+▶Random Forest: average many deep CART trees, decorrelated by column subsampling.
+Nearly tuning-free, and R2 = 0.8327. The default answer.
+▶Boosted Trees: repeatedly fit shallow trees to residuals, shrinking each by ν.
+Best in class at 0.8600 — after ν and B are chosen honestly. Out of the box it loses to
+the forest.
+Trees are poor in high dimension, but fitting them to low-dimensional factors (principal
+components, Lecture 1) is a good option.
+And whichever you pick, you have bought accuracy with interpretability. Permutation
+importance and partial dependence are how you buy some of it back.
+57 / 58
+
+===== PAGE 62 =====
+Roundup on Nonlinear Regression and Classification
+Many other nonparametric learning algorithms
+▶Neural Networks (and deep learning):
+many recursive logistic regressions.
+▶Support Vector Machines:
+Project to HD, then classify.
+▶Gaussian Processes, splines, wavelets, etc:
+Use sums of curvy functions in regression.
+Some of these are great, but all take a ton of tuning.
+On tabular financial data of the size you will actually meet, nothing out of the box beats a tree
+ensemble. When the linear model does win, it is usually because the signal really is weak and
+linear — which, in asset pricing, is more often than you would like.
+58 / 58

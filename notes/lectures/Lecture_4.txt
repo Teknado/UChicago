@@ -1,0 +1,678 @@
+
+===== PAGE 1 =====
+BUSN 41210: Financial Analytics
+Lecture 4: Model Evaluation and Selection
+Dacheng Xiu
+Chicago Booth
+September 14, 2026
+© 2026 Dacheng Xiu, Chicago Booth Restricted Materials. All Rights Reserved.
+1
+
+===== PAGE 2 =====
+Outline
+1. F-test/Partial F-test
+2. Principles of Model Selection
+3. Information Criteria
+▶AIC
+▶BIC and Bayesian Model Selection
+4. Screening
+5. Stepwise Strategies
+6. Training, Validation, and Test
+7. In-sample (IS) vs Out-of-sample (OOS) R2s
+2
+
+===== PAGE 3 =====
+Model Evaluation vs Model Selection
+Aspect
+Model Evaluation
+Model Selection
+Motivation
+Assess the performance of a trained
+model on unseen data
+Choose the best model or configura-
+tion from a set of candidate models
+Goal
+Measure generalization performance
+and compute evaluation metrics
+Select the model that performs best
+on future data
+Process
+Use validation or test sets to evaluate
+model accuracy, error rates, etc.
+Compare different models or hyper-
+parameter settings based on evalua-
+tion metrics
+Outcome
+Understand how well the model might
+perform in real-world situations
+Identify the best-performing model
+for deployment
+3
+
+===== PAGE 4 =====
+F-test for Model Evaluation
+Recall the Multiple Linear Regression model
+Y = β0 + β1X1 . . . + βdXd + ε,
+ε ∼N(0, σ2)
+F-test concerns with a big picture question:
+Is this regression worthwhile? Does it help us predict Y ?
+H0 : β1 = β2 = . . . = βd = 0
+H1 : at least one βj̸ = 0.
+Assess if the overall model is statistically significant in explaining the data
+4
+
+===== PAGE 5 =====
+F-test Statistic
+Construct the F test statistic from regression ANOVA:
+f = SSR/(p −1)
+SSE/(n −p) =
+R2/(p −1)
+(1 −R2)/(n −p)
+If f is big, then the regression is “working”:
+▶Big SSR relative to SSE.
+▶R2 close to one.
+As usual, we need a statistical notion of “how big is big”. Under H0, f has Fp−1,n−p
+distribution with p −1 numerator and n −p denominator degrees of freedom.
+▶Generally, f > 4 is very significant (reject the null).
+5
+
+===== PAGE 6 =====
+The F-Distribution
+What kind of distribution is this?
+It is a right skewed, positive valued family of distributions indexed by two parameters
+(the two df values).
+The p-value for this test is φ = Pr(Fp−1,n−p > f ).
+6
+
+===== PAGE 7 =====
+Revisit the Market Equity Premium Example
+> rest full = F1.columns[0:-1].tolist()
+> rest full = ’+’.join(rest full)
+> reg full = smf.ols(formula=’ret ∼
+{}’.format(rest full), data = F1).fit()
+> reg full.summary()
+F value of 3.040 is statistically significant (p-value = 0.00142).
+7
+
+===== PAGE 8 =====
+Market Equity Premium
+What about fitting a reduced model with only seven covariates?
+> reg reduced = smf.ols(formula=’ret
+infl + ik + eqis + d p + ntis + e p + svar’, data=F1).fit()
+> reg reduced.summary()
+8
+
+===== PAGE 9 =====
+Market Equity Premium
+The full model (16 covariates) has R2
+full = 0.419, while
+the second model (7 covariates) has R2
+base = 0.387.
+Is this difference worth 9 extra covariates?
+The R2 will always increase as more variables are added
+▶If you have more b’s to tune, you can get a smaller SSE.
+▶Least squares fit “noise” in the data.
+▶This is known as overfitting.
+More parameters will always result in a better fit to the sample data, but will not
+necessarily lead to better predictions.
+9
+
+===== PAGE 10 =====
+Adjusted R2
+This is the reason some people like to look at adjusted R2
+R2
+a = 1 −s2/s2
+y
+Since s2/s2
+y is a ratio of variance estimates, R2
+a will not necessarily increase when new
+variables are added.
+Unfortunately, the adjusted r-square is practically useless!
+Problem: There is no theory for inference about R2
+a, so we will not be able to tell “how
+big is big.”
+10
+
+===== PAGE 11 =====
+Partial F-test
+With the F-test example we were asking
+“Is this regression worthwhile?”
+Now, we’re asking
+“Is it useful to add these extra covariates to the regression?”
+Partial F-test compares two nested models and decide if the additional predictors or
+complexity in the larger model are justified.
+You always want to use the simplest model possible.
+▶Only add covariates if they are truly informative or compulsory.
+11
+
+===== PAGE 12 =====
+Partial F-test
+Consider the regression model
+Y = β0 + β1X1 . . . + βdbaseXdbase + βdbase+1Xdbase+1 . . . + βdfullXdfull + ε
+Such that dbase is the number of covariates in the base (small) model and dfull > dbase
+is the number in the full (larger) model.
+The Partial F-test is concerned with the hypotheses
+H0 : βdbase+1 = βdbase+2 = . . . = βdfull = 0
+H1 : at least one βj̸ = 0 for j > dbase.
+12
+
+===== PAGE 13 =====
+Partial F-test
+It turns out that under the null H0 (i.e. base model is true),
+f
+=
+(R2
+full −R2
+base)/(dfull −dbase)
+(1 −R2
+full)/(n −dfull −1)
+=
+(SSEfull −SSEbase)/(pfull −pbase)
+SSEfull/(n −pfull)
+∼Fpfull−pbase,n−pfull
+That is, under the null hypothesis, the ratio of normalized R2
+full −R2
+base (increase in R2) and
+1 −R2
+full (full model SSE
+SST )
+has F-distribution with dfull −dbase and n −dfull −1 df.
+▶Big f means that R2
+full −R2
+base is statistically significant.
+▶Big f means that at least one of the added X’s is useful.
+13
+
+===== PAGE 14 =====
+Partial F-test in Python
+Back to our Market Equity Premium data; we want to test
+H0 : βj = 0 for all j ∈{dfy, d e, lty, tms, tbl, dfr, d y, ltr, b m}
+H1 : at least one βj̸ = 0.
+The F-stat is f = (R2
+full −R2
+base)/(dfull −dbase)
+(1 −R2
+full)/(n −dfull −1)
+= 0.36
+> n = reg full.nobs
+> R2 full = reg full.rsquared
+> R2 base = reg reduced.rsquared
+> d full = reg full.df model
+> d base = reg reduced.df model
+> F statistic = ((R2 full - R2 base)/(d full - d base)) / ((1-R2 full)/(n - d full - 1))
+F stat: 0.47
+df1 = d full - d base
+df2 = n - d full - 1
+p value = 1 - f.cdf(F statistic, df1, df2)
+pvalue: 0.85
+A p-value of 0.85 is not at all significant, so we stick with the null hypothesis and
+assume the base (7 covariates) model.
+14
+
+===== PAGE 15 =====
+Market Equity Return: Partial F-test
+As always, this is super easy to do in Python!
+Just do ANOVA for the full model against the base model:
+> anova results = anova lm(reg reduced, reg full)
+> anova results
+15
+
+===== PAGE 16 =====
+F-test vs t-test
+Suppose that you have d covariates, X1 . . . Xd, and you are considering adding a new
+covariate Xd+1 into your model.
+The t-test is H0 : βd+1 = 0 vs H1 : βd+1̸ = 0, with test statistic z = bd+1/sbd+1 and
+p-value P(Zn−d−2 > |z|).
+Partial F-test is H0 : βd+1 = 0 vs H1 : βd+1̸ = 0, with test stat
+f = (SSEfull −SSEbase)/MSEfull and p-value P(F1,n−d−2 > f ).
+The test hypotheses are exactly the same!
+16
+
+===== PAGE 17 =====
+F-test vs t-test
+It turns out that the tests also lead to the same p-values.
+Consider testing the two covariates (ik and ltr) regression against an even more
+simple model that includes only ik.
+The t-test asks: is bltr far enough from zero to be significant?
+F-test asks: is the increase in R2 significantly big?
+> anova lm(reg simple, reg 2cov) #ltr
+17
+
+===== PAGE 18 =====
+F-test vs t-test
+Ask the same question, F and t tests give the same answer!
+In fact, f = z2 and P(Zn−d−2 > |z|) = P(F1,n−d−2 > z2),
+so the f stat for one extra variable is just a squared t stat.
+18
+
+===== PAGE 19 =====
+F-test vs t-test
+Why not always decide what to include by just looking at individual t-stats?
+Multicollinearity: If the X’s are highly correlated with each other, then sbj’s will be
+very big (since you don’t know which Xj to regress onto), and you will fail to reject
+βj = 0 for all of the Xj’s even if they do have a strong effect on Y .
+Does F-test significance imply at least one t-test significance? How about vice versa?
+19
+
+===== PAGE 20 =====
+Market Equity Premium: F-test vs t-test
+Does F-test significance imply at least one t-test significance?
+> reg temp = smf.ols(formula=’ret ∼
+infl + lty + tbl + svar’, data=F1).fit()
+> reg temp.summary()
+20
+
+===== PAGE 21 =====
+Market Equity Premium: F-test vs t-test
+Does at least one t-test significance imply F-test significance?
+> reg temp = smf.ols(formula=’ret ∼
+svar + d y’, data=F1).fit()
+> reg temp.summary()
+21
+
+===== PAGE 22 =====
+Variable Selection
+Suppose we observe Y , an outcome of interest, and (X1, ..., Xd), a set of potential
+explanatory variables or predictors.
+Assuming the model is always linear, so model selection simplifies to variable selection.
+The variable selection problem:
+To find the ”best” subset of X’s for predicting Y
+Particularly of interest when d is large and X1, ...Xd is thought to contain many
+redundant or irrelevant variables.
+22
+
+===== PAGE 23 =====
+Guiding Principle for Variable Selection
+Ockham’s Razor: Plurality ought not be posited without necessity.
+Brevity is the soul of wit.
+Overly complicated models lead to bad forecasts.
+23
+
+===== PAGE 24 =====
+Variable Selection
+We need to find a trade-off between data fit and simplicity.
+We already know one method: partial F-test!
+▶Do your regression with covariates you think should be in the model.
+▶Kick out the variables that don’t seem significant.
+▶Use a partial F-test to see if the simple model is good enough.
+This only works for a small number of variables, which you’ve chosen intelligently.
+24
+
+===== PAGE 25 =====
+Multiple Testing
+A big problem with using tests (t or F) for comparing models is the false discovery
+rate associated with multiple testing:
+▶If you do 20 tests of true H0, with α = .05, you expect to see 1 positive (i.e. you
+expect to reject at true null).
+Suppose that you have 100 predictors, 10% of which are actually influential, and that
+you find all of those significant.
+Since you reject H0 for 5% of the useless 90% variables, 4.5/(4.5 + 10) ≈1/3 of your
+significant bj’s will be false positives!
+In modern big data problems, <1% of variables are influential.
+25
+
+===== PAGE 26 =====
+Let Us Actually Try It
+That was arithmetic. Here is the same thing done to us, on the market equity premium
+series we have been using all lecture.
+The setup, and note how honest it is:
+▶Take the real series, n = 74 observations.
+▶Generate 100 predictors from a random number generator. Standard normal,
+independent of each other and of everything else.
+▶By construction, not one of them has any relationship to the market. There is no
+signal to find. We know this because we made them up.
+▶Regress the market on each one in turn and collect the 100 t-statistics.
+How many of the 100 come back significant at the 5% level? And how big will
+the best t-statistic be? Say a number before I show you.
+26
+
+===== PAGE 27 =====
+Ten of Them. And the Best Has p = 0.005.
+0
+25
+50
+75
+100
+−3
+−2
+−1
+0
+1
+2
+t-statistic
+±1.96
+10 of 100 look significant
+2
+3
+4
+5
+ 1.96
+ Bonferroni
+ 3.65
+ our winner
+ 2.88
+the best of 100, under the null
+▶10 of the 100 are significant at the 5% level — twice what the arithmetic predicted, which is
+itself just luck.
+▶The winner has t = −2.88, p = 0.0052. Written up on its own, with a story attached, that is a
+publishable-looking finding about a variable that is definitionally noise.
+▶And the right-hand panel says why it was inevitable. Over 4,000 repetitions of the whole exercise,
+the chance that at least one of 100 noise variables looks significant is 99.6%.
+You will essentially always find something. The question was never whether you would.
+27
+
+===== PAGE 28 =====
+And Adjusted R2 Does Not Save You
+Keep the best k of those hundred noise columns and fit them together:
+best k noise columns
+1
+2
+5
+10
+20
+in-sample R2
+0.10
+0.16
+0.34
+0.40
+0.54
+adjusted R2
++0.09
++0.13
++0.29
++0.31
++0.37
+An adjusted R2 of 0.31 on a model containing no information whatsoever. The
+penalty for extra parameters is real, but it was never designed to protect you from
+having searched.
+The fix is not a better statistic. It is a different critical value. Under the null, the
+largest of 100 t-statistics has a 95th percentile of 3.65 — not 1.96. Bonferroni gives
+3.65 for 100 tests, which is the same number, and our winning t of 2.88 does not clear
+it.
+Report the size of the search next to the result. And then, for the rest of this course,
+stop asking whether it fits and start asking whether it predicts.
+28
+
+===== PAGE 29 =====
+Information Criteria for Model Selection
+Instead of testing, there are Information Criteria metrics which attempt to quantify
+how well our model would have predicted the data (regardless of what you’ve
+estimated for the βj’s).
+The best of these is the BIC: Bayes Information Criterion, which is based on a
+“Bayesian” philosophy of statistics.
+BIC = n log(s2) + p log(n),
+where p = d + 1 = ‘degrees of freedom’ used in your model fit.
+You want to choose the model that leads to minimum BIC.
+29
+
+===== PAGE 30 =====
+AIC for Model Selection
+Another popular metric is the Akaike Information Criterion:
+AIC = n log(s2) + 2p
+A general form for these criterion is n log(s2) + kp, where k = 2 for AIC and
+k = log(n) for BIC.
+In Python, we can get the AIC and BIC as follows.
+> reg full = smf.ols(formula=’ret ∼
+{}’.format(rest full), data = F1).fit()
+> full AIC = reg full.aic
+> full BIC = reg full.bic
+full model AIC: -61.02
+full model BIC: -26.46
+AIC prefers more complicated models than BIC, and it is not as easily interpretable.
+30
+
+===== PAGE 31 =====
+BIC for Model Selection
+One (very!) nice thing about the BIC is that you can interpret it in terms of model
+probabilities.
+Given a list of possible models {M1, M2, . . . , MR}, the probability that model i is
+correct is
+P(Mi) ≈
+e−1
+2 BIC(Mi)
+PR
+r=1 e−1
+2 BIC(Mr) =
+e−1
+2 [BIC(Mi)−BICmin]
+PR
+r=1 e−1
+2 [BIC(Mr)−BICmin]
+(Subtract BICmin = min{BIC(M1) . . . BIC(MR)} for numerical stability.)
+31
+
+===== PAGE 32 =====
+A/BIC for Model Selection
+Consider our market equity premium regressions; we can compare the full model to the
+reduced model.
+BIC and AIC both agree with our F-testing selection (reduced).
+BIC indicates that we are practically 100% sure the reduced model is better.
+32
+
+===== PAGE 33 =====
+Thus BIC is an alternative to testing for comparing models.
+▶It is easy to calculate.
+▶You are able to evaluate model probabilities.
+▶There are no “multiple testing” type worries.
+▶It generally leads to more simple models than F-tests.
+As with testing, you need to narrow down your options before comparing models.
+What if there are too many possibilities?
+33
+
+===== PAGE 34 =====
+Subset Selection
+General idea:
+▶Search across all permutations of models
+▶Choose best model according to some criterion
+Challenges:
+▶Set of models may be large
+▶Best model of size k, for k = 1, ..., p
+▶Combinations are P
+k≤p
+ p
+k
+
+= 2p
+34
+
+===== PAGE 35 =====
+Example: Macro Forecasting
+Forecast monthly growth rate of US industrial production using 119 macro variables
+Dataset extends from February 1960 to December 2021 (743 monthly observations)
+35
+
+===== PAGE 36 =====
+Summary for Full Regression
+> rest full = df.columns[1:].tolist()
+> rest full = ’+’.join(rest full)
+> full model = smf.ols(formula=’growth ~ {}’.format(rest full), data = df).fit()
+> full model.summary()
+36
+
+===== PAGE 37 =====
+Screening
+The histogram of 119 correlations between each predictor and growth:
+By only considering predictors with abs correlations greater than a certain threshold,
+we can reduce the total number of covariates.
+37
+
+===== PAGE 38 =====
+38
+
+===== PAGE 39 =====
+Screening As A Selection Tool?
+Maybe we grab models with covariates selected based on different correlation
+thresholds and compare?
+Problems with screening:
+It may keep redundant variables and omit variables that are important only when
+combined.
+In post-screening regression, multicollinearity may occur and cause problems.
+Bringing together variables that are useful individually does not mean that they will be
+useful collectively.
+39
+
+===== PAGE 40 =====
+Forward Stepwise Regression
+Forward stepwise procedures: start from a simple ‘null’ model, and incrementally
+update fit to allow slightly more complexity.
+The forward selected() function executes a common routine:
+▶Fit all univariate models. Choose that with lowest AIC
+and put that variable – say x(1) – in your model.
+▶Fit all bivariate models including x(1) (y ∼β(1)x(1) + βjxj), and add xj from one
+with lowest AIC to your model.
+▶Repeat: min AIC by adding one variable to your model.
+You stop when some model selection rule (AIC) is lower for the current model than for
+any of the models that add one variable.
+40
+
+===== PAGE 41 =====
+Better than backwards methods
+▶The ‘full’ model can be expensive or tough to fit, while the null model is usually
+available in closed form.
+▶Jitter the data and the full model can change dramatically (because it overfits).
+The null model is always the same.
+Stepwise approaches are ‘myopic’: they find the best solution at each step without
+considering the overall global path.
+A related subtle (but massively important) issue is stability.
+Stepwise procedure has high sampling variability: the selected variables change a lot
+from one dataset to another.
+41
+
+===== PAGE 42 =====
+Out-of-Sample Prediction
+How do we evaluate a prediction model? Make predictions!
+Basic Idea: We want to use the model to predict outcomes for observations we have
+not seen before.
+▶Use the data to create a prediction problem.
+▶See how our candidate models perform.
+We’ll split the entire sample into training, validation, and test subsamples.
+42
+
+===== PAGE 43 =====
+Training, Validation, and Test
+1. Training Phase (model building)
+▶The model learns from the training set by adjusting its parameters (e.g., coefficients
+in a regression model).
+2. Validation Phase (model selection)
+▶During training, different models or hyperparameters are evaluated using the
+validation set to determine the best model configuration.
+3. Testing Phase (model evaluation)
+▶After model selection, the test set is used to evaluate the final model. This step
+provides a realistic assessment of how the model will perform on unseen data.
+▶The test set remains untouched until this stage to avoid biased estimates of model
+performance.
+1: In-sample; 3: Out-of-sample;
+2: gray zone. “In-” for model evaluation purpose, “Out-of-” for model selection.
+43
+
+===== PAGE 44 =====
+IS R2
+It is common to use R2s as a measure of goodness of fit.
+For in-sample R2, we have data [X1, Y1] . . . [Xn, Yn] and you use this data to fit ˆβ.
+The SSE is then, say for linear regression,
+SSEIS( ˆβ) =
+n
+X
+i=1
+(Yi −X ′
+i ˆβ)2.
+The denominator is
+SSEIS( ˆY = ¯Y ) =
+n
+X
+i=1
+(Yi −¯Y )2.
+The IS R2 is given by:
+R2
+IS = 1 −SSEIS( ˆβ)/SSEIS( ˆY = ¯Y ).
+44
+
+===== PAGE 45 =====
+OOS R2
+For out-of-sample R2, observations 1...n are still used to fit ˆβ, but the SSE of the
+numerator is now calculated over new observations, say
+SSEOOS( ˆβ) =
+X
+i∈OOS
+(Yi −X ′
+i ˆβ)2
+45
+
+===== PAGE 46 =====
+OOS R2
+The denominator choice for OOS R2 has certain freedom.
+▶A common choice is based on ¯Y from in sample data.
+SSEOOS( ˆY = ¯Y ) =
+X
+i∈OOS
+(Yi −¯Y )2.
+Why not out of sample ¯Y ?
+R2
+OOS = 1 −SSEOOS( ˆβ)/SSEOOS( ˆY = ¯Y ).
+▶Or one may use 0 or other estimators of β based on in sample data.
+R2
+OOS = 1 −SSEOOS( ˆβ)/SSEOOS(0).
+Ultimately, OOS R2 is a comparison of SSEs between two predictors. It can be
+negative!
+46
+
+===== PAGE 47 =====
+Market Equity Premium Example: OOS R2
+We’ll split the Market Equity Premium data into a training set and a testing set, using
+an 80:20 ratio.
+> N = len(F1)
+> leaveout = range(4*N//5,N)
+> yout = F1[[’ret’]].iloc[leaveout]
+> yin
+= F1.drop(F1.index[leaveout])[[’ret’]]
+> variable
+= ’+’.join(F1.iloc[:,:-1].columns)
+> ISreg = smf.ols(formula=’ret ∼
+{}’.format(variable), data=F1.drop(F1.index[leaveout])).fit()
+> IS_R2 = ISreg.rsquared
+IS_R2: 0.47554
+> y pred = ISreg.predict(F1.iloc[leaveout])
+> TSS = sse(yout.ret,yin.ret.mean())
+> SSE = sse(yout.ret, y pred)
+> OOS_R2 = 1 - SSE/TSS
+OOS_R2: -0.11806
+47
+
+===== PAGE 48 =====
+Macro Forecasting Example: OOS R2
+Next, we’ll split the Macro Forecasting data into a training set and a testing set, using
+an 80:20 ratio.
+> N = len(df)
+> leaveout = range(4*N//5,N)
+> yout = df[[’growth’]].iloc[leaveout]
+> yin
+= df.drop(df.index[leaveout])[[’growth’]]
+> variable
+= ’+’.join(df.iloc[:,:-1].columns)
+> ISreg = smf.ols(formula=’growth ∼
+{}’.format(variable), data=df.drop(df.index[leaveout])).fit()
+> IS_R2 = ISreg.rsquared
+IS_R2: 0.52849
+> y pred = ISreg.predict(df.iloc[leaveout])
+> TSS = sse(yout.growth,yin.growth.mean())
+> SSE = sse(yout.growth, y pred)
+> OOS_R2 = 1 - SSE/TSS
+OOS_R2: -0.50138
+48
+
+===== PAGE 49 =====
+Macro Forecasting Example: Screening and Forward Selection
+The results appear to improve when using Correlation Screening or Forward Stepwise
+Selection.
+However, both methods still present certain challenges...
+49
+
+===== PAGE 50 =====
+Sensitivity to the Sample
+Let’s assume that 1 year of data is omitted.
+> random start = np.random.choice(df.index[:-11])
+> random year = range(random start, random start + 12)
+> df new = df.drop(index=random year)
+Our results indicate that both methods (Correlation Screening and Forward Selection)
+are sensitive to the sample data.
+50
