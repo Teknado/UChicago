@@ -1,0 +1,19 @@
+[PASS] structure: 41 cells, template cell types, exam cells unchanged (setup cells: data path; cell 21 fills in SEED)
+[PASS] code: all 2097 code lines equal the reference (only the eleven Table 3.31 labels and one explicit scoring= changed)
+[PASS] outputs: identical to the reference (labels mapped; timings and the Table 3.16 floating-point count excepted); 20 of 20 figures byte-identical
+[PASS] numbers: 3 numbers in answers/write-up not found verbatim in any output (reference: 3); new: []
+[PASS] AI Coding Guide §4a shuffle=True only in the exam's Problem 1 folds
+[PASS] AI Coding Guide §4a train_test_split only in Problem 1.4 (a cross-section)
+[PASS] AI Coding Guide §4a no KFold / GridSearchCV / *CV estimator / cross_val_* in Problem 3
+[PASS] AI Coding Guide §4b every StandardScaler / PCA fit happens inside a function that receives the training rows
+[PASS] AI Coding Guide §4c no LogisticRegression
+[PASS] AI Coding Guide §4d no r2_score
+[PASS] AI Coding Guide scoring= set explicitly in every cross_val_score / cross_validate / permutation_importance
+[PASS] AI Coding Guide no n_iter_no_change (shuffled internal split)
+[PASS] AI Coding Guide RandomForestRegressor always given max_features
+[PASS] AI Coding Guide §3 no pandas-1 idioms or sns.set() (DataFrame.append would raise in pandas 3; the run has no errors)
+[PASS] AI Coding Guide ddof never left to numpy's default in .var()/.std() on arrays
+[PASS] no reference to the working process (code, text and printed output; the exam's own text excepted)
+[PASS] methodology: 310 distinct numbers; all appear in the notebook (outputs, code or text)
+
+ALL CHECKS PASSED
