@@ -70,7 +70,7 @@ report(f'code: all {n} code lines have the same logic as the reference (differen
        f'plus scoring=, the full-width design table and the statsmodels version)', p)
 
 # 3 ---------------------------------------------------------------- outputs
-NUM = re.compile(r'-?\d+(?:\.\d+)?(?:e-?\d+)?')
+NUM = re.compile(r'(?<![A-Za-z_\d.])-?\d+(?:\.\d+)?(?:e-?\d+)?')      # digits attached to letters (P1, M2, x86) are labels
 def values(c, skip_design=False):
     """Every number printed by a cell, in order; timings removed; the design table (text only) optionally skipped."""
     seq, imgs = [], []
