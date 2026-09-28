@@ -1,14 +1,31 @@
 # Context for Claude: BUSN 41210 Financial Analytics final project (Chicago Booth, Autumn 2026)
 
 Read this first. It records what the project is, the rules the student set, what has been done, where everything is,
-and how to change things safely. The detailed records are `METHODOLOGY_LOG.md` (every decision and its justification),
+and how to change things safely.
+
+> **The submission is `Final_Autumn_2026-1.ipynb` on branch `financial_analytics_final`**, with its methodology in
+> `METHODOLOGY.md` on the same branch. That branch holds only the submission, the methodology, the data and the course
+> materials, and contains no reference to the working process. **This branch (`financial_analytics_opus`) is the
+> development branch.** Its `Final_Autumn_2026-1.ipynb` is the 107-cell *analysis notebook*, the source of everything.
+> The submission is built from it in two scripted steps, each verified:
+> 1. `notes/final41/build_final41.py` maps the analysis notebook onto the exam template's 41 cells and applies the
+>    answer corrections, producing `Final_Autumn_2026_final.ipynb` (record: `FINAL_METHODOLOGY.md`; checks:
+>    `notes/final41/verify_final41.py`);
+> 2. `notes/final_clean/build_clean.py` removes every reference to the working process from that file, producing the
+>    submission (checks, including the AI Coding Guide scan: `notes/final_clean/verify_clean.py`).
+>
+> The comparison with another AI's attempt is on `financial_analytics_review` (`review/COMPARISON.md`).
+
+The detailed records are `METHODOLOGY_LOG.md` (every decision and its justification),
 `PROJECT_PLAN.md` (the approved plan), and `LECTURE_METHODS_P3.md` (every lecture method and how it relates to Problem 3).
 
 ## 1. What this is
 
 - A final exam for BUSN 41210 Financial Analytics (lectures by Dacheng Xiu). It is an **open-AI assignment**: the
   professor explicitly permits AI help. All work is academic.
-- The deliverable is **one Jupyter notebook**, `Final_Autumn_2026-1.ipynb`, filled in place. It holds three problems:
+- The deliverable is **one Jupyter notebook**, `Final_Autumn_2026-1.ipynb` on branch `financial_analytics_final` (41
+  cells, the exam template's layout), built from this branch's 107-cell analysis notebook of the same name. It holds
+  three problems:
   - **Problem 1** (20 points): trees and ensembles.
   - **Problem 2** (20 points): training on your own output.
   - **Problem 3** (60 points): an open-ended research project on cross-country asset return prediction, with a
@@ -66,7 +83,10 @@ and how to change things safely. The detailed records are `METHODOLOGY_LOG.md` (
 
 | file | what it is |
 |---|---|
-| `Final_Autumn_2026-1.ipynb` | **The submission.** 107 cells (68 code), executed. |
+| `Final_Autumn_2026-1.ipynb` | **The analysis notebook** (107 cells, 68 code, executed): the source of the submission. The submission itself is the 41-cell file of the same name on branch `financial_analytics_final`. |
+| `Final_Autumn_2026_final.ipynb` | The 41-cell intermediate: the analysis notebook in the exam template's layout, with the answer corrections of `FINAL_METHODOLOGY.md` §3. Built by `notes/final41/build_final41.py`, verified by `notes/final41/verify_final41.py`. |
+| `FINAL_METHODOLOGY.md` | The record of the 41-cell step: the cell map, every text correction and why, and the verification results. |
+| `notes/final41/`, `notes/final_clean/` | Build, execute and verify scripts for the two steps (107 → 41 cells; 41 cells → submission). |
 | `METHODOLOGY_LOG.md` | The running justification of every analytical choice. It has sections A–J: §C Problem 1, §D Problem 2, §E Problem 3 (data traps, hypotheses, the 23 design decisions, the 38-specification ledger, results, referee review, final audit), §F rejected alternatives, §H dated deviations. |
 | `PROJECT_PLAN.md` | The approved plan for all three problems, with lecture citations and an errata section at the end. |
 | `LECTURE_METHODS_P3.md` | 152 rows: every method in L1–L8, whether Problem 3 uses it, and why or why not, citing printed numbers. §6 holds the proposals P-A … P-S and their status. |
@@ -212,10 +232,15 @@ to it.
    `LECTURE_METHODS_P3.md`.
 5. Commit with a clear message and push to `financial_analytics_opus`. Commit messages end with the attribution lines
    the harness supplies.
+6. **Propagate the change to the submission.** Rebuild and re-verify both steps (`notes/final41/build_final41.py`,
+   execute, `verify_final41.py`; then `notes/final_clean/build_clean.py`, execute, `verify_clean.py`), and update
+   `METHODOLOGY.md` on `financial_analytics_final`. A small markdown-only change may instead be made directly in the
+   submission, provided it introduces no reference to the working process.
 
 ## 9. Possible next steps (only if the student asks)
 
-- Trim the write-up (about 6,100 words including tables) if the student wants it shorter.
+- Trim the write-up (about 6,100 words before its appendices) if the student wants it shorter. (The answer cells were
+  already cut to the exam's sentence and paragraph limits in the 41-cell step.)
 - Run any of the declined proposals. They are post hoc, and each adds a test.
 - Final proofreading of the answer cells, whose sentence limits are set by the exam: 1.2 one or two sentences;
   1.3 two or three; 2.1 two or three; 2.3 and 2.4 one paragraph each.
