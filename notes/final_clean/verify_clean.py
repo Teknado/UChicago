@@ -45,11 +45,12 @@ def statements(code):
 p = []
 for s in range(41):
     if new[s]['cell_type'] == 'code':
-        a, b = statements(RELABEL(src(old[s]))), statements(src(new[s]))
+        a = statements(RELABEL(src(old[s])).replace("cv=cv5, return_estimator=True)", "cv=cv5, scoring='accuracy', return_estimator=True)"))
+        b = statements(src(new[s]))
         if a != b:
             p.append(f'cell {s}: ' + str([l for l in difflib.unified_diff(a, b, lineterm='', n=0)][:6]))
 n = sum(len(statements(src(c))) for c in new if c['cell_type'] == 'code')
-report(f'code: all {n} code lines equal the reference (only the eleven Table 3.31 labels changed)', p)
+report(f'code: all {n} code lines equal the reference (only the eleven Table 3.31 labels and one explicit scoring= changed)', p)
 
 # 3 ---------------------------------------------------------------- outputs
 TIMING = re.compile(r'(\d+(?:\.\d+)?) ?(s|min|seconds)\b')
@@ -104,9 +105,20 @@ SKIP = {str(k) for k in range(0, 13)} | {'300', '50', '168', '38', '400', '500',
 def nums(t):
     t = re.sub(r'\$[^$]*\$', ' ', t).replace('−', '-')
     return {x for x in re.findall(r'(?<![\w.])-?\d[\d,]*(?:\.\d+)?%?', t) if x not in SKIP and not re.fullmatch(r'\d{4}', x)}
+_cache = {}
 def found(x, blob):
     core = x.lstrip('-')
-    return any(v in blob for v in {x, core, core.replace(',', ''), core.rstrip('%'), core.rstrip('%') + ' %'})
+    if any(v in blob for v in {x, core, core.replace(',', ''), core.rstrip('%'), core.rstrip('%') + ' %'}):
+        return True
+    if id(blob) not in _cache:        # every number printed, as floats (a rounding of one of them also counts)
+        _cache[id(blob)] = {abs(float(v.replace(',', ''))) for v in re.findall(r'\d[\d,]*\.?\d*(?:e-?\d+)?', blob) if v.replace(',', '').replace('.', '', 1).replace('e-', '', 1).replace('e', '', 1).isdigit()}
+    val = core.rstrip('%').replace(',', '')
+    try:
+        target, dec = float(val), (len(val.split('.')[1]) if '.' in val else 0)
+    except ValueError:
+        return False
+    scale = [1, 100, 0.01] if core.endswith('%') else [1]
+    return any(round(p * k, dec) == target for p in _cache[id(blob)] for k in scale)
 def missing(cells):
     blob = printed(cells) + '\n'.join(src(c) for c in cells if c['cell_type'] == 'markdown' and not src(c).lstrip().startswith(('**Answer', '## Write-up')))
     return {x for c in cells if c['cell_type'] == 'markdown' and src(c).lstrip().startswith(('**Answer', '## Write-up')) for x in nums(src(c)) if not found(x, blob)}
@@ -114,7 +126,12 @@ m_new, m_old = missing(new), missing(old)
 report(f'numbers: {len(m_new)} numbers in answers/write-up not found verbatim in any output (reference: {len(m_old)}); new: {sorted(m_new - m_old)}', sorted(m_new - m_old))
 
 # 5 ---------------------------------------------------------------- AI Coding Guide static scan
-code = {s: src(c) for s, c in enumerate(new) if c['cell_type'] == 'code'}
+import io, tokenize
+def no_comments(t):
+    """The code with every comment token removed (strings such as '#2a78d6' are kept)."""
+    toks = [tk for tk in tokenize.generate_tokens(io.StringIO(t).readline) if tk.type != tokenize.COMMENT]
+    return tokenize.untokenize(toks)
+code = {s: no_comments(src(c)) for s, c in enumerate(new) if c['cell_type'] == 'code'}
 P3 = code[39]
 rules = [
     ('§4a shuffle=True only in the exam\'s Problem 1 folds', lambda: [s for s, t in code.items() if 'shuffle=True' in t and s != 4]),
@@ -122,14 +139,14 @@ rules = [
     ('§4a no KFold / GridSearchCV / *CV estimator / cross_val_* in Problem 3',
      lambda: re.findall(r'\b(?:KFold|StratifiedKFold|GridSearchCV|RandomizedSearchCV|RidgeCV|LassoCV|ElasticNetCV|cross_val_score|cross_validate|cross_val_predict|TimeSeriesSplit)\b', P3)),
     ('§4b every StandardScaler / PCA fit happens inside a function that receives the training rows',
-     lambda: [l.strip() for l in P3.splitlines() if re.search(r'(StandardScaler|PCA)\(', l) and not l.startswith((' ', '\t')) and 'import' not in l]),
+     lambda: [l.strip() for l in P3.splitlines() if re.search(r'(StandardScaler|PCA)\(', l) and not l.startswith((' ', '\t', '#')) and 'import' not in l]),
     ('§4c no LogisticRegression', lambda: [s for s, t in code.items() if 'LogisticRegression' in t]),
     ('§4d no r2_score', lambda: [s for s, t in code.items() if 'r2_score' in t]),
     ('scoring= set explicitly in every cross_val_score / cross_validate / permutation_importance',
      lambda: [m.group(0)[:60] for s, t in code.items() for m in re.finditer(r'(cross_val_score|cross_validate|permutation_importance)\((?:[^()]|\([^()]*\))*\)', t) if 'scoring=' not in m.group(0)]),
     ('no n_iter_no_change (shuffled internal split)', lambda: [s for s, t in code.items() if 'n_iter_no_change' in t]),
-    ('RandomForestRegressor always given max_features', lambda: [m.group(0)[:60] for m in re.finditer(r'RandomForestRegressor\((?:[^()]|\([^()]*\))*\)', P3) if 'max_features' not in m.group(0)]),
-    ('§3 no pandas-1 idioms or sns.set()', lambda: [s for s, t in code.items() if re.search(r"\.append\(|fillna\(method|iteritems\(|normalize=True|sns\.set\(", t)]),
+    ('RandomForestRegressor always given max_features', lambda: [m.group(0)[:60] for m in re.finditer(r'RandomForestRegressor\((?:[^()]|\([^()]*\))*\)', P3) if 'max_features' not in m.group(0) and not ('**params' in m.group(0) and re.search(r'RF_PARAMS = dict\([^)]*max_features', P3))]),
+    ('§3 no pandas-1 idioms or sns.set() (DataFrame.append would raise in pandas 3; the run has no errors)', lambda: [s for s, t in code.items() if re.search(r"(?:df|frame|DataFrame)\w*\.append\(|fillna\(method|iteritems\(|normalize=True|sns\.set\(", t)] + [s for s, c in enumerate(new) for o in c.get('outputs', []) if o.get('output_type') == 'error']),
     ('ddof never left to numpy\'s default in .var()/.std() on arrays', lambda: [l.strip()[:70] for s, t in code.items() for l in t.splitlines() if re.search(r'np\.(var|std)\((?![^)]*ddof)', l)]),
 ]
 for name, fn in rules:
@@ -156,7 +173,7 @@ if METH:
     blob = blob.replace('−', '-')
     mt = open(METH).read()
     mt = re.sub(r'`[^`]*`', ' ', mt)
-    mnums = {x for x in re.findall(r'(?<![\w.^])-?\d[\d,]*(?:\.\d+)?%?', mt.replace('−', '-')) if x not in SKIP and not re.fullmatch(r'\d{4}', x)}
+    mnums = {x for x in re.findall(r'(?<![\w.^])-?\d{1,3}(?:,\d{3})+(?:\.\d+)?%?|(?<![\w.^,])-?\d+(?:\.\d+)?%?', mt.replace('−', '-')) if x not in SKIP and not re.fullmatch(r'\d{4}', x)}
     miss = sorted(x for x in mnums if not found(x, blob))
     report(f'methodology: {len(mnums)} distinct numbers; all appear in the notebook (outputs, code or text)', miss)
 

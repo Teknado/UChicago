@@ -29,6 +29,10 @@ def sub(i, old, new, n=1):
 sub(9, "# Notes on the tree above (moved here from the 1.2 answer, which the exam limits to two sentences):",
        "# Notes on the tree above:")
 
+# Problem 1.2 (cell 9): the fold-stability call collects the fold trees only, but scoring is still set explicitly (the rule
+# is that no scorer is ever left at its default).
+sub(9, "cv=cv5, return_estimator=True)", "cv=cv5, scoring='accuracy', return_estimator=True)")
+
 # ---------------------------------------------------------------- code: Problem 3 (cell 39)
 P = 39
 sub(P, "# Post hoc (P-A, added after the final audit at the student's request).", "# Post hoc (added after the out-of-sample results were seen).")
