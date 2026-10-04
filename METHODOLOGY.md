@@ -59,7 +59,7 @@ Every result quoted here is printed by a cell of the notebook, and Problem 3's h
 - **Baseline.** "Nobody purchases" is right for every non-buyer: 257 of 400 = **64.25%** (63.75% to 65.00% by fold, because 257 cannot be split evenly into five stratified folds). It is the bar every model must beat (L6 p.57: report accuracy "with the majority-class rate next to it").
 - **Unpruned tree: 85.00%** (340/400). Grown on all 400 people it has 61 leaves and depth 14 and gets 399 of 400 right in sample; the one miss is a pair of identical people with opposite outcomes. The gap between 399/400 in sample and 85% out of sample is memorised noise (L8 p.30, p.38).
 - **Sweep of `max_leaf_nodes` over {2, 3, 4, 6, 8, 12}:** 83.50%, **90.75%**, **90.75%**, 89.50%, 88.25%, 87.50%.
-- **Choice: 3 leaves.** 3 and 4 leaves tie exactly (363/400 correct), and the exam's rule gives a tie to the smaller tree. The tie is structural: the fourth split divides a leaf into two leaves with the same predicted class, so the two trees make identical out-of-fold predictions for all 400 people (checked in code).
+- **Choice: 3 leaves.** 3 and 4 leaves tie exactly (363/400 correct), and the exam's rule gives a tie to the smaller tree. The tie is structural: the fourth split changes no held-out prediction, so the two trees make identical out-of-fold predictions for all 400 people (checked in code).
 - **Either side of the optimum.**
   - With 2 leaves, CV and training-fold accuracy are both low (83.50% and 84.0%): the model is too simple.
   - From 6 to 12 leaves, CV accuracy falls while training-fold accuracy rises (92.6% to 94.4%): the trees are overfitting (the hump of L8 p.32).
@@ -160,7 +160,7 @@ The answer is the student's own prediction, written before any Problem 2 code, a
 - **The drift.** The exam's design is used: 500 desks × 500 nights for n = 50, 500 and 5,000, with SEs across desks.
   - n × (mean nightly change in log σ̂²) is −0.99, −1.00 and −0.87 (SE 0.02, 0.07 and 0.20).
   - A precise n = 50 run (2,000 × 2,000), planned in advance, gives −1.025 (SE 0.005). That is 4.9 SE from −1/n but 0.9 SE from −1/(n−1).
-  - **Formula: −1/(n−1), which is approximately −1/n for any realistic n.**
+  - **Formula: approximately −1/(n−1), which is in turn approximately −1/n for any realistic n.**
   - The n = 500 value is cross-checked on the 2.2 run's increments (−0.002059 per night).
 - **The three numbers:**
   - the expectation of σ̂² on night 2,500 is exactly 1;
@@ -168,7 +168,7 @@ The answer is the student's own prediction, written before any Problem 2 code, a
   - the 1,000-desk mean is 2.34. The 10 largest desks hold 88.8% of the sum and the single largest (1,566) 66.8%; the other 999 desks average 0.78, and only 5.9% of desks end above 1.
 - **The reconciliation.**
   - Each night multiplies σ̂² by a factor (the random-walk reading is our construction, from var(sum) = sum of variances, L2 p.63) with mean exactly 1 but median below 1. On the log scale this is a random walk with drift ≈ −1/n.
-  - The median therefore falls along a straight line: exp(−2,499 × 0.00206) = 0.0058 against the measured 0.0059.
+  - The median therefore falls along a straight line: the formula predicts exp(−2,499/499) = 0.0067 against the measured 0.0059 (Table 2.3c).
   - The spread grows like √nights (predicted sd 3.17, observed 3.29).
   - The expectation stays at 1 only because a vanishing minority of desks explodes, so a sample of 1,000 is neither 1 nor the median.
   - Unbiasedness controls only the mean of tomorrow's estimate, not its typical value (L2 p.71–72). Each night's error becomes the next night's truth, and after night 1 no new information about σ enters the library (L2 p.57).
@@ -452,6 +452,7 @@ The notebook's Section 3.10 lists these in full; in summary:
 
 ## 5. How the notebook is organised and how to run it
 
-- **41 cells in the exam's order.** Every exam question is followed by its code cell and its answer cell (2.1 has no code cell, because it is answered before any code; 1.5's code cell only records that no code is needed). Problem 3's analysis is one code cell, printing a banner where each section (3.0–3.9) starts. The write-up is the final cell, followed by the notes of Sections 3.0–3.10 as appendices; table and figure numbers (Table 3.x, Figure 3.x) are shared between the code output and the write-up.
-- **Running it.** On the class server as it stands, or with the data files next to the notebook. It runs top to bottom with no errors, in about 14 minutes on four cores (Problem 3 in about 12).
+- **The exam's cells, in the exam's order, then Problem 3 in sections.** Cells 0–38 are the exam template's, filled in place: every exam question is followed by its code cell and its answer cell (2.1 has no code cell, because it is answered before any code; 1.5's code cell only records that no code is needed). Problem 3's analysis follows as ten sections, 3.0–3.9, each a markdown note followed by its code cell (each code cell prints a banner as it starts), then Section 3.10, the deviations from the design. The write-up comes last, one markdown cell per section of the paper. Table and figure numbers (Table 3.x, Figure 3.x) are shared between the code output and the write-up. Each problem runs on its own in a fresh kernel (Problem 1 after the exam's first import cell; Problems 2 and 3 from their own setup cells).
+- **70 cells**: 22 code and 48 markdown.
+- **Running it.** On the class server as it stands, or with the data files next to the notebook. It runs top to bottom with no errors, in about 10–16 minutes on four cores (Problem 3 in about 8–14).
 - **Environment.** Python 3.11, pandas 3.0.6, numpy 2.4.6, scikit-learn 1.9.1, statsmodels 0.15.0 (the class server has Python 3.14, pandas 3.0.5 and scikit-learn 1.9.0; no known dependence on the difference).

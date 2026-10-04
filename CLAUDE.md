@@ -4,7 +4,7 @@ This branch, `financial_analytics_final`, holds the **submission** and nothing e
 
 | file | what it is |
 |---|---|
-| `Final_Autumn_2026-1.ipynb` | **The submission.** The exam notebook filled in place: 41 cells in the exam template's exact order (13 code, 28 markdown), executed top to bottom with no errors (about 14 minutes). |
+| `Final_Autumn_2026-1.ipynb` | **The submission.** The exam notebook filled in place: the template's cells 0–38 in their exact order, then Problem 3 split into section cells (70 cells: 22 code, 48 markdown), executed top to bottom with no errors (about 10–16 minutes). |
 | `METHODOLOGY.md` | The full explanation of what was done and why: every rule, every choice, the alternatives and why each was used or set aside, the answers. Every result it quotes is printed by the notebook. |
 | `AI_Coding_Guide.pdf`, `Lecture_1.pdf` … `Lecture_8.pdf` | Course materials. |
 | `*.csv` | Data (Problem 1: `Social_Network_Ads.csv`; Problem 2: `dj30.csv`; Problem 3: `asset_panel.csv`, `asset_info.csv`, `asset_returns_wide.csv`, `macro_global.csv`, `macro_country.csv`, `macro_country_extended.csv`). |
@@ -41,8 +41,9 @@ and checked by `notes/final_clean/verify_clean.py` (both on that branch).
 ## Notebook map (0-based cells)
 Exam text 0–5, 8, 11, 14, 17, 20, 22, 24, 27, 30, 33–38. Problem 1: code 6, 9, 12, 15, 18; answers 7, 10, 13, 16, 19.
 Problem 2: setup 21 (`SEED`); answer 2.1 in 23; code 25, 28, 31; answers 26, 29, 32. Problem 3: setup 35 (the exam's);
-**all analysis in 39** (a printed banner starts each of Sections 3.0–3.9); **write-up in 40**, followed by the notes of
-Sections 3.0–3.10 as appendices (3.0 the design fixed before fitting, 3.10 the deviations from it).
+introduction 39; Sections 3.0–3.9 as (note, code) pairs in 40–59 (code cells 41, 43, …, 59; each prints a banner);
+Section 3.10 (deviations) in 60; **write-up in 61–69**, one markdown cell per section of the paper. Each problem runs on its
+own in a fresh kernel (Problem 1 needs the exam's import cell 2).
 
 ## Changing the notebook safely
 1. Edit cell `source` fields with `json` (keep `indent=1`, `ensure_ascii=False`).
